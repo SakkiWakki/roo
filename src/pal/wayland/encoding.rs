@@ -1,4 +1,6 @@
-use super::{base_ids, wl_registry_opcode, WaylandEvent};
+use crate::pal::platform::objects::WlRegistry;
+
+use super::{base_ids, WaylandEvent};
 use super::{
     ALIGN_MASK, HEADER_SIZE, NULL_TERMINATOR, OBJECT_ID_SIZE, OPCODE_MASK, SIZE_SHIFT,
     STRING_HEADER_SIZE, U32_SIZE, UINT_SIZE,
@@ -90,7 +92,10 @@ pub fn encode_op(obj_id: u32, arg: u32, opcode: u32) -> Vec<u8> {
 /// Encodes a wl_registry.bind message (opcode 0)
 /// Check wayland.xml for wire format
 pub fn encode_bind(name: u32, interface: &str, version: u32, assign_id: u32) -> Vec<u8> {
-    println!("bind: name={} interface={} version={} id={}", name, interface, version, assign_id);
+    println!(
+        "bind: name={} interface={} version={} id={}",
+        name, interface, version, assign_id
+    );
     let registry_id = base_ids::REGISTRY;
     let str_len = interface.len() + 1;
     let str_padded = (str_len + ALIGN_MASK) & !ALIGN_MASK;
@@ -101,7 +106,7 @@ pub fn encode_bind(name: u32, interface: &str, version: u32, assign_id: u32) -> 
         + UINT_SIZE
         + OBJECT_ID_SIZE) as u32;
 
-    let size_and_opcode = (size << SIZE_SHIFT) | wl_registry_opcode::BIND;
+    let size_and_opcode = (size << SIZE_SHIFT) | WlRegistry::BIND;
     let mut msg = Vec::with_capacity(size as usize);
     msg.write_u32(registry_id);
     msg.write_u32(size_and_opcode);
@@ -128,7 +133,10 @@ pub fn read_event(stream: &mut UnixStream) -> Result<WaylandEvent, std::io::Erro
         let code = u32::from_ne_bytes(data[4..8].try_into().unwrap());
         let str_len = u32::from_ne_bytes(data[8..12].try_into().unwrap()) as usize;
         let msg = String::from_utf8_lossy(&data[12..12 + str_len.saturating_sub(1)]);
-        eprintln!("[wayland] ERROR: failed_obj={} code={} msg={}", failed_obj, code, msg);
+        eprintln!(
+            "[wayland] ERROR: failed_obj={} code={} msg={}",
+            failed_obj, code, msg
+        );
     }
     Ok(WaylandEvent {
         obj_id,

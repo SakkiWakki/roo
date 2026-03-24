@@ -4,6 +4,35 @@ use std::io::Write;
 use std::os::unix::io::AsRawFd;
 use std::os::unix::net::UnixStream;
 
+pub struct WlDisplay;
+
+impl WlDisplay {
+    pub const SYNC: u32 = 0;
+    pub const GET_REGISTRY: u32 = 1;
+    pub const EVENT_ERROR: u16 = 0;
+}
+
+pub struct WlRegistry;
+
+impl WlRegistry {
+    pub const BIND: u32 = 0;
+    pub const EVENT_GLOBAL: u16 = 0;
+    pub const EVENT_GLOBAL_REMOVE: u16 = 1;
+}
+
+pub struct WlCallback;
+
+impl WlCallback {
+    pub const EVENT_DONE: u16 = 0;
+}
+
+pub struct XdgToplevel;
+
+impl XdgToplevel {
+    pub const EVENT_CONFIGURE: u16 = 0;
+    pub const EVENT_CLOSE: u16 = 1;
+}
+
 /// Sends a message with an attached file descriptor via SCM_RIGHTS
 fn send_with_fd(stream: &mut UnixStream, msg: &[u8], fd: i32) -> Result<(), std::io::Error> {
     use std::mem::size_of;
@@ -207,8 +236,8 @@ pub struct XdgWmBase {
 }
 
 impl XdgWmBase {
-    pub const GET_XDG_SURFACE: u32 = 2;
-    pub const PONG: u32 = 3;
+    const GET_XDG_SURFACE: u32 = 2;
+    const PONG: u32 = 3;
     pub const EVENT_PING: u16 = 0;
 
     pub fn get_xdg_surface(
@@ -236,8 +265,8 @@ pub struct XdgSurface {
 }
 
 impl XdgSurface {
-    pub const GET_TOPLEVEL: u32 = 1;
-    pub const ACK_CONFIGURE: u32 = 4;
+    const GET_TOPLEVEL: u32 = 1;
+    const ACK_CONFIGURE: u32 = 4;
     pub const EVENT_CONFIGURE: u16 = 0;
 
     pub fn get_toplevel(&self, stream: &mut UnixStream, new_id: u32) -> Result<(), std::io::Error> {
@@ -260,9 +289,9 @@ pub struct WlSurface {
 }
 
 impl WlSurface {
-    pub const ATTACH: u32 = 1;
-    pub const DAMAGE: u32 = 2;
-    pub const COMMIT: u32 = 6;
+    const ATTACH: u32 = 1;
+    const DAMAGE: u32 = 2;
+    const COMMIT: u32 = 6;
 
     pub fn attach(&self, stream: &mut UnixStream, buffer_id: u32) -> Result<(), std::io::Error> {
         let msg_size: u32 = (HEADER_SIZE + U32_SIZE * 3) as u32;
@@ -299,14 +328,18 @@ impl WlSurface {
     }
 }
 
-
 pub struct ZxdgDecorationManager {
     pub id: u32,
 }
 
 impl ZxdgDecorationManager {
-    pub const GET_TOPLEVEL_DECORATION: u32 = 1;
-    pub fn get_toplevel_decoration(&self, stream: &mut UnixStream, new_id: u32, xdg_toplevel_id: u32) -> Result<(), std::io::Error> {
+    const GET_TOPLEVEL_DECORATION: u32 = 1;
+    pub fn get_toplevel_decoration(
+        &self,
+        stream: &mut UnixStream,
+        new_id: u32,
+        xdg_toplevel_id: u32,
+    ) -> Result<(), std::io::Error> {
         let msg_size = (HEADER_SIZE + U32_SIZE * 2) as u32;
         let mut msg = build_msg(self.id, msg_size, Self::GET_TOPLEVEL_DECORATION);
         msg.write_u32(new_id);
@@ -321,12 +354,19 @@ pub struct ZxdgToplevelDecoration {
 }
 
 impl ZxdgToplevelDecoration {
-    pub const SET_MODE: u32 = 1;
-    pub const CLIENT_SIDE_MODE: u32 = 1;
-    pub const SERVER_SIDE_MODE: u32 = 2;
+    const SET_MODE: u32 = 1;
+    const CLIENT_SIDE_MODE: u32 = 1;
+    const SERVER_SIDE_MODE: u32 = 2;
 
-    pub fn set_mode(&self, stream: &mut UnixStream, mode: u32) -> Result<(), std::io::Error> {
+    fn set_mode(&self, stream: &mut UnixStream, mode: u32) -> Result<(), std::io::Error> {
         stream.write_all(&encode_op(self.id, mode, Self::SET_MODE))?;
         Ok(())
+    }
+
+    pub fn set_server_side_mode(&self, stream: &mut UnixStream) -> Result<(), std::io::Error> {
+        self.set_mode(stream, Self::SERVER_SIDE_MODE)
+    }
+    pub fn set_client_side_mode(&self, stream: &mut UnixStream) -> Result<(), std::io::Error> {
+        self.set_mode(stream, Self::CLIENT_SIDE_MODE)
     }
 }

@@ -1,5 +1,5 @@
 //! Tests for memory safety in unsafe blocks since Wayland needs unsafe allocs
-use goo::pal::{create_memfd, WlBuffer};
+use roo::pal::{create_memfd, WlBuffer};
 use serial_test::serial;
 
 // Helpers

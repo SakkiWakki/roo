@@ -4,6 +4,11 @@ use std::io::Cursor;
 use std::io::Write;
 use std::os::unix::net::UnixStream;
 
+use crate::pal::platform::objects::ZxdgDecorationManager;
+use crate::pal::platform::objects::ZxdgToplevelDecoration;
+use crate::pal::platform::zxdg_decoration_manager;
+use crate::pal::platform::zxdg_toplevel_decoration;
+
 use super::encoding::{encode_bind, encode_op, read_event, MessageReader};
 use super::{
     base_ids, interfaces, wl_callback_event, wl_display, wl_registry_event, xdg_toplevel,
@@ -57,16 +62,20 @@ pub fn connect() -> Result<Window, std::io::Error> {
     let runtime_dir = env::var("XDG_RUNTIME_DIR")
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::NotFound, e))?;
     let wayland_display = env::var("WAYLAND_DISPLAY").unwrap_or("wayland-0".to_string());
-    let socket_path = format!("{}/{}", runtime_dir, wayland_display);
-    let mut id_counter: u32 = base_ids::XDG_WM_BASE + 1;
+    let socket_path: String = format!("{}/{}", runtime_dir, wayland_display);
+    let mut id_counter: u32 = base_ids::ZXDG_DECORATION_MANAGER + 1;
 
     let mut stream = UnixStream::connect(&socket_path)?;
 
+    println!("Setting wl display id: {}", base_ids::WL_DISPLAY);
+    println!("Setting registry id: {}", base_ids::REGISTRY);
     stream.write_all(&encode_op(
         base_ids::WL_DISPLAY,
         base_ids::REGISTRY,
         wl_display::GET_REGISTRY,
     ))?;
+
+    println!("Setting sync id: {}", base_ids::SYNC);
     stream.write_all(&encode_op(
         base_ids::WL_DISPLAY,
         base_ids::SYNC,
@@ -75,7 +84,7 @@ pub fn connect() -> Result<Window, std::io::Error> {
 
     let globals = read_until_sync(&mut stream)?;
 
-    let (compositor, shm, xdg_wm_base) = create_window_bindings(&mut stream, globals)?;
+    let (compositor, shm, xdg_wm_base, zxdg_deco_manager) = create_window_bindings(&mut stream, globals)?;
     let mut next_id = || {
         let id = id_counter;
         id_counter += 1;
@@ -90,11 +99,15 @@ pub fn connect() -> Result<Window, std::io::Error> {
     xdg_wm_base.get_xdg_surface(&mut stream, surface_id, xdg_surface_id)?;
     let xdg_surface = XdgSurface { id: xdg_surface_id };
 
-    let toplevel_id = next_id();
-    xdg_surface.get_toplevel(&mut stream, toplevel_id)?;
+    let xdg_toplevel_id = next_id();
+    xdg_surface.get_toplevel(&mut stream, xdg_toplevel_id)?;
+
+    let zxdg_deco_id = next_id();
+    zxdg_deco_manager.get_toplevel_decoration(&mut stream, zxdg_deco_id, xdg_toplevel_id)?;
+    let zxdg_top_deco = ZxdgToplevelDecoration { id: zxdg_deco_id };
+    zxdg_top_deco.set_mode(&mut stream, 2)?; // Serverside
 
     wl_surface.commit(&mut stream)?;
-
     let serial = wait_for_configure(&mut stream, xdg_surface_id)?;
     xdg_surface.ack_configure(&mut stream, serial)?;
 
@@ -111,7 +124,7 @@ pub fn connect() -> Result<Window, std::io::Error> {
         xdg_wm_base,
         xdg_surface,
         xdg_surface_id,
-        toplevel_id,
+        toplevel_id: xdg_toplevel_id,
         wl_surface,
     })
 }
@@ -148,10 +161,22 @@ fn wait_for_configure(stream: &mut UnixStream, xdg_surface_id: u32) -> Result<u3
     }
 }
 
+
+fn supported_version(interface: &str) -> u32 {
+    match interface {
+        interfaces::WL_COMPOSITOR => 4,
+        interfaces::WL_SHM => 1,
+        interfaces::XDG_WM_BASE => 2,
+        interfaces::ZXDG_DECORATION_MANAGER => 1,
+        _ => 1,
+    }
+}
+
+/// Bind in monotonically increasing id order for the backends that need it to be like this
 fn create_window_bindings(
     stream: &mut UnixStream,
     globals: Vec<WaylandGlobal>,
-) -> Result<(WlCompositor, WlShm, XdgWmBase), std::io::Error> {
+) -> Result<(WlCompositor, WlShm, XdgWmBase, ZxdgDecorationManager), std::io::Error> {
     for &required in interfaces::REQUIRED {
         if !globals.iter().any(|g| g.interface == required) {
             return Err(std::io::Error::new(
@@ -165,13 +190,32 @@ fn create_window_bindings(
         (interfaces::WL_COMPOSITOR, base_ids::WL_COMPOSITOR),
         (interfaces::WL_SHM, base_ids::WL_SHM),
         (interfaces::XDG_WM_BASE, base_ids::XDG_WM_BASE),
+        (interfaces::ZXDG_DECORATION_MANAGER, base_ids::ZXDG_DECORATION_MANAGER),
     ];
-    for g in &globals {
-        for &(iface, id) in bind_map {
-            if g.interface == iface {
-                stream.write_all(&encode_bind(g.name, &g.interface, g.version, id))?;
-            }
-        }
+
+    let mut to_bind: Vec<(&str, u32, u32, u32)> = Vec::new();
+
+    for &(iface, bind_id) in bind_map {
+        let chosen = globals
+            .iter()
+            .filter(|g| g.interface == iface)
+            .min_by_key(|g| g.name)
+            .ok_or_else(|| {
+                std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    format!("compositor missing required global: {}", iface),
+                )
+            })?;
+
+        let bind_version = std::cmp::min(chosen.version, supported_version(iface));
+        to_bind.push((iface, chosen.name, bind_version, bind_id));
+    }
+
+    to_bind.sort_by_key(|(_, _, _, bind_id)| *bind_id);
+
+    for (iface, global_name, bind_version, bind_id) in to_bind {
+        println!("binding id: {}", bind_id);
+        stream.write_all(&encode_bind(global_name, iface, bind_version, bind_id))?;
     }
 
     Ok((
@@ -183,6 +227,9 @@ fn create_window_bindings(
         },
         XdgWmBase {
             id: base_ids::XDG_WM_BASE,
+        },
+        ZxdgDecorationManager {
+            id: base_ids::ZXDG_DECORATION_MANAGER,
         },
     ))
 }

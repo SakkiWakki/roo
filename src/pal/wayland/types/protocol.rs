@@ -37,11 +37,12 @@ pub mod xdg_toplevel {
     }
 }
 
-pub mod zxdg_decoration_manager_v1 {
+pub mod zxdg_decoration_manager {
+    pub const DESTROY: u32 = 0;
     pub const GET_TOPLEVEL_DECORATION: u32 = 1;
 }
 
-pub mod zxdg_toplevel_decoration_v1 {
+pub mod zxdg_toplevel_decoration {
     pub const SET_MODE: u32 = 1;
     pub const MODE_SERVER_SIDE: u32 = 2;
 }
@@ -52,11 +53,12 @@ pub mod interfaces {
     pub const XDG_WM_BASE: &str = "xdg_wm_base";
     pub const ZXDG_DECORATION_MANAGER: &str = "zxdg_decoration_manager_v1";
 
-    pub const REQUIRED: &[&str] = &[WL_COMPOSITOR, WL_SHM, XDG_WM_BASE];
+    pub const REQUIRED: &[&str] = &[WL_COMPOSITOR, WL_SHM, XDG_WM_BASE, ZXDG_DECORATION_MANAGER];
 
     pub enum RequiredInterface {
         WlCompositor = 0,
         WlShm = 1,
         XdgWmBase = 2,
+        ZxdgDecManager  = 3,
     }
 }

@@ -170,6 +170,9 @@ fn wait_for_configure(stream: &mut UnixStream, xdg_surface_id: u32) -> Result<u3
 fn supported_version(interface: &str) -> u32 {
     // TODO: Decide this later
     match interface {
+        interfaces::WL_COMPOSITOR => 4,
+        interfaces::WL_SHM => 1,
+        interfaces::XDG_WM_BASE => 2,
         interfaces::ZXDG_DECORATION_MANAGER => 1,
         _ => 1,
     }

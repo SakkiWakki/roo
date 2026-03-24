@@ -56,7 +56,6 @@ impl Window {
                 let serial = u32::from_ne_bytes(event.data[0..4].try_into().unwrap());
                 if let Some(top_config) = top_config_tmp.take() {
                     self.resize(top_config.width as u32, top_config.height as u32)?;
-                    println!("test")
                 }
                 self.xdg_surface.ack_configure(&mut self.stream, serial)?;
                 self.wl_surface.commit(&mut self.stream)?;

@@ -1,5 +1,5 @@
-use std::io::Cursor;
 use super::super::super::encoding::MessageReader;
+use std::io::Cursor;
 
 pub struct XdgToplevel;
 
@@ -47,7 +47,7 @@ pub struct ToplevelConfigure {
 }
 
 impl ToplevelConfigure {
-    pub fn parse(data: Vec<u8>) -> Self {
+    pub fn parse(data: &[u8]) -> Self {
         let mut cursor = Cursor::new(data);
         let width = cursor.read_u32() as i32;
         let height = cursor.read_u32() as i32;
@@ -56,7 +56,11 @@ impl ToplevelConfigure {
         let states = (0..num_states)
             .filter_map(|_| ToplevelState::try_from(cursor.read_u32()).ok())
             .collect();
-        Self { width, height, states }
+        Self {
+            width,
+            height,
+            states,
+        }
     }
 
     pub fn is_maximized(&self) -> bool {

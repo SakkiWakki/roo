@@ -2,8 +2,8 @@ use super::super::{
     ALIGN_MASK, HEADER_SIZE, OBJECT_ID_SIZE, SIZE_SHIFT, STRING_HEADER_SIZE, U32_SIZE, UINT_SIZE,
 };
 use super::message_builder::MessageBuilder;
-use crate::pal::platform::objects::WlRegistry;
 use crate::pal::platform::base_ids;
+use crate::pal::platform::objects::WlRegistry;
 
 /// Initializes a Wayland message Vec with the two-word header
 pub fn build_msg(obj_id: u32, size: u32, opcode: u32) -> Vec<u8> {

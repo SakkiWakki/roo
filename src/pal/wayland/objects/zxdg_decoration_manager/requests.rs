@@ -1,5 +1,5 @@
-use super::super::super::{HEADER_SIZE, U32_SIZE};
 use super::super::super::encoding::{build_msg, MessageBuilder};
+use super::super::super::{HEADER_SIZE, U32_SIZE};
 use std::io::Write;
 use std::os::unix::net::UnixStream;
 

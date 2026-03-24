@@ -29,7 +29,7 @@ impl MessageReader for UnixStream {
     }
 }
 
-impl MessageReader for Cursor<Vec<u8>> {
+impl MessageReader for Cursor<&[u8]> {
     fn read_u32(&mut self) -> u32 {
         let mut buf = [0u8; U32_SIZE];
         self.read_exact(&mut buf).unwrap();

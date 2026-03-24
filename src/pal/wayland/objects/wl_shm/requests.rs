@@ -1,8 +1,8 @@
+use super::super::super::encoding::{build_msg, MessageBuilder};
+use super::super::super::{HEADER_SIZE, U32_SIZE};
 use super::super::helper::{create_memfd, send_with_fd};
 use super::super::wl_buffer::WlBuffer;
 use super::super::wl_shm_pool::WlShmPool;
-use super::super::super::{HEADER_SIZE, U32_SIZE};
-use super::super::super::encoding::{build_msg, MessageBuilder};
 use std::os::unix::net::UnixStream;
 
 pub struct WlShm {

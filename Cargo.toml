@@ -1,0 +1,11 @@
+[package]
+name = "goo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+libc = "0.2"
+serial_test = "3"

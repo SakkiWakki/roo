@@ -1,0 +1,10 @@
+pub const HEADER_SIZE: usize = 8;
+pub const U32_SIZE: usize = 4;
+pub const OBJECT_ID_SIZE: usize = 4;
+pub const UINT_SIZE: usize = 4;
+pub const STRING_HEADER_SIZE: usize = 4;
+pub const NULL_TERMINATOR: usize = 1;
+pub const SIZE_SHIFT: u32 = 16;
+pub const OPCODE_MASK: u32 = 0xFFFF;
+pub const ALIGN: usize = 4;
+pub const ALIGN_MASK: usize = ALIGN - 1;

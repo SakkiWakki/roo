@@ -1,4 +1,5 @@
 //! See https://wayland-book.com/protocol-design/wire-protocol.html
+pub mod bind;
 pub(crate) mod connect;
 pub mod event_loop;
 pub mod protocol;

@@ -4,8 +4,9 @@ use std::os::unix::net::UnixStream;
 
 use crate::pal::platform::objects::{
     WlBuffer, WlCallback, WlCompositor, WlDisplay, WlRegistry, WlShm, WlSurface, XdgSurface,
-    XdgWmBase, ZxdgDecorationManager, ZxdgToplevelDecoration,
+    XdgWmBase, ZwpLinuxDmabufV1, ZxdgDecorationManager, ZxdgToplevelDecoration,
 };
+use crate::pal::platform::windowing::bind::Bind;
 
 use super::super::encoding::{encode_bind, encode_op};
 use super::super::types::WaylandGlobal;
@@ -20,9 +21,9 @@ pub fn connect() -> Result<Window, std::io::Error> {
     let socket_path: String = format!("{}/{}", runtime_dir, wayland_display);
 
     let mut stream = UnixStream::connect(&socket_path)?;
-    let mut id_counter: u32 = base_ids::ZXDG_DECORATION_MANAGER + 1;
+    let mut id_counter: u32 = base_ids::ZWP_LINUX_DMABUF + 1;
 
-    let (compositor, wl_shm, xdg_wm_base, zxdg_deco_manager) = setup_globals(&mut stream)?;
+    let (compositor, wl_shm, xdg_wm_base, zxdg_deco_manager, _dmabuf) = setup_globals(&mut stream)?;
 
     let wl_surface = create_wl_surface(&mut stream, &mut id_counter, &compositor)?;
     let xdg_surface = create_xdg_surface(&mut stream, &mut id_counter, &xdg_wm_base, &wl_surface)?;
@@ -65,7 +66,16 @@ fn next_id(id_counter: &mut u32) -> u32 {
 
 fn setup_globals(
     stream: &mut UnixStream,
-) -> Result<(WlCompositor, WlShm, XdgWmBase, ZxdgDecorationManager), std::io::Error> {
+) -> Result<
+    (
+        WlCompositor,
+        WlShm,
+        XdgWmBase,
+        ZxdgDecorationManager,
+        ZwpLinuxDmabufV1,
+    ),
+    std::io::Error,
+> {
     stream.write_all(&encode_op(
         base_ids::WL_DISPLAY,
         base_ids::REGISTRY,
@@ -183,59 +193,41 @@ fn supported_version(interface: &str) -> u32 {
 fn create_window_bindings(
     stream: &mut UnixStream,
     globals: Vec<WaylandGlobal>,
-) -> Result<(WlCompositor, WlShm, XdgWmBase, ZxdgDecorationManager), std::io::Error> {
-    let bind_map: &[(&str, u32)] = &[
-        (interfaces::WL_COMPOSITOR, base_ids::WL_COMPOSITOR),
-        (interfaces::WL_SHM, base_ids::WL_SHM),
-        (interfaces::XDG_WM_BASE, base_ids::XDG_WM_BASE),
-        (
-            interfaces::ZXDG_DECORATION_MANAGER,
-            base_ids::ZXDG_DECORATION_MANAGER,
-        ),
-    ];
-
-    let mut to_bind: Vec<(&str, u32, u32, u32)> = bind_map
-        .iter()
-        .map(|&(iface, bind_id)| {
-            let chosen = globals
-                .iter()
-                .filter(|g| g.interface == iface)
-                .min_by_key(|g| g.name)
-                .ok_or_else(|| {
-                    std::io::Error::new(
-                        std::io::ErrorKind::NotFound,
-                        format!("compositor missing required global: {}", iface),
-                    )
-                })?;
-
-            Ok((
-                iface,
-                chosen.name,
-                std::cmp::min(chosen.version, supported_version(iface)),
-                bind_id,
-            ))
-        })
-        .collect::<Result<_, std::io::Error>>()?;
-
-    to_bind.sort_by_key(|(_, _, _, bind_id)| *bind_id);
-
-    for (iface, global_name, bind_version, bind_id) in to_bind {
-        println!("binding id: {}", bind_id);
-        stream.write_all(&encode_bind(global_name, iface, bind_version, bind_id))?;
-    }
-
+) -> Result<
+    (
+        WlCompositor,
+        WlShm,
+        XdgWmBase,
+        ZxdgDecorationManager,
+        ZwpLinuxDmabufV1,
+    ),
+    std::io::Error,
+> {
     Ok((
-        WlCompositor {
-            id: base_ids::WL_COMPOSITOR,
-        },
-        WlShm {
-            id: base_ids::WL_SHM,
-        },
-        XdgWmBase {
-            id: base_ids::XDG_WM_BASE,
-        },
-        ZxdgDecorationManager {
-            id: base_ids::ZXDG_DECORATION_MANAGER,
-        },
+        bind_global::<WlCompositor>(stream, &globals)?,
+        bind_global::<WlShm>(stream, &globals)?,
+        bind_global::<XdgWmBase>(stream, &globals)?,
+        bind_global::<ZxdgDecorationManager>(stream, &globals)?,
+        bind_global::<ZwpLinuxDmabufV1>(stream, &globals)?,
     ))
+}
+
+fn bind_global<T: Bind>(
+    stream: &mut UnixStream,
+    globals: &[WaylandGlobal],
+) -> Result<T, std::io::Error> {
+    let chosen = globals
+        .iter()
+        .filter(|g| g.interface == T::INTERFACE)
+        .min_by_key(|g| g.name)
+        .ok_or_else(|| {
+            std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("compositor missing required global: {}", T::INTERFACE),
+            )
+        })?;
+
+    let version = std::cmp::min(chosen.version, supported_version(T::INTERFACE));
+    stream.write_all(&encode_bind(chosen.name, T::INTERFACE, version, T::BIND_ID))?;
+    Ok(T::new())
 }

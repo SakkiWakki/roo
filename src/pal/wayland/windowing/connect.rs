@@ -7,8 +7,9 @@ use crate::pal::platform::objects::{
     XdgWmBase, ZxdgDecorationManager, ZxdgToplevelDecoration,
 };
 
-use super::super::encoding::{encode_bind, encode_op, read_event, MessageReader};
+use super::super::encoding::{encode_bind, encode_op, MessageReader};
 use super::super::{base_ids, interfaces, WaylandGlobal};
+use super::event_loop::{event_loop, EventContext};
 use super::window::Window;
 
 use std::io::Cursor;
@@ -27,7 +28,12 @@ pub fn connect() -> Result<Window, std::io::Error> {
     let wl_surface = create_wl_surface(&mut stream, &mut id_counter, &compositor)?;
     let xdg_surface = create_xdg_surface(&mut stream, &mut id_counter, &xdg_wm_base, &wl_surface)?;
     let xdg_toplevel_id = create_xdg_toplevel(&mut stream, &mut id_counter, &xdg_surface)?;
-    setup_decoration(&mut stream, &mut id_counter, &zxdg_deco_manager, xdg_toplevel_id)?;
+    setup_decoration(
+        &mut stream,
+        &mut id_counter,
+        &zxdg_deco_manager,
+        xdg_toplevel_id,
+    )?;
 
     wl_surface.commit(&mut stream)?;
     let serial = wait_for_configure(&mut stream, xdg_surface.id)?;
@@ -39,13 +45,16 @@ pub fn connect() -> Result<Window, std::io::Error> {
 
     Ok(Window {
         stream,
-        xdg_wm_base,
-        xdg_surface,
         toplevel_id: xdg_toplevel_id,
-        wl_surface,
-        wl_shm,
-        wl_buffer,
-        id_counter,
+        ctx: EventContext {
+            xdg_wm_base,
+            xdg_surface,
+            wl_surface,
+            wl_shm,
+            wl_buffer,
+            id_counter,
+            top_config_tmp: None,
+        },
     })
 }
 
@@ -116,12 +125,16 @@ fn setup_decoration(
 }
 
 fn wait_for_configure(stream: &mut UnixStream, xdg_surface_id: u32) -> Result<u32, std::io::Error> {
-    loop {
-        let event = read_event(stream)?;
-        if event.obj_id == xdg_surface_id && event.opcode == XdgSurface::EVENT_CONFIGURE {
-            return Ok(u32::from_ne_bytes(event.data[0..4].try_into().unwrap()));
-        }
-    }
+    let mut serial: Option<u32> = None;
+    let handlers = [(
+        xdg_surface_id,
+        XdgSurface::EVENT_CONFIGURE,
+        XdgSurface::handle_configure_serial as _,
+    )];
+    event_loop(stream, &mut serial, &handlers)?;
+    serial.ok_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::Other, "configure event missing serial")
+    })
 }
 
 pub fn setup_buffer(
@@ -140,25 +153,20 @@ pub fn setup_buffer(
 
 fn read_until_sync(stream: &mut UnixStream) -> Result<Vec<WaylandGlobal>, std::io::Error> {
     let mut globals: Vec<WaylandGlobal> = Vec::new();
-
-    loop {
-        let event = read_event(stream)?;
-
-        if event.obj_id == base_ids::REGISTRY && event.opcode == WlRegistry::EVENT_GLOBAL {
-            let mut cursor = Cursor::new(event.data.as_slice());
-            let name = cursor.read_u32();
-            let interface = cursor.read_string();
-            let version = cursor.read_u32();
-            globals.push(WaylandGlobal {
-                name,
-                interface,
-                version,
-            });
-        }
-        if event.obj_id == base_ids::SYNC && event.opcode == WlCallback::EVENT_DONE {
-            return Ok(globals);
-        }
-    }
+    let handlers = [
+        (
+            base_ids::REGISTRY,
+            WlRegistry::EVENT_GLOBAL,
+            WlRegistry::handle_global as _,
+        ),
+        (
+            base_ids::SYNC,
+            WlCallback::EVENT_DONE,
+            WlCallback::handle_sync_done as _,
+        ),
+    ];
+    event_loop(stream, &mut globals, &handlers)?;
+    Ok(globals)
 }
 
 fn supported_version(interface: &str) -> u32 {

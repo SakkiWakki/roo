@@ -1,5 +1,6 @@
 //! See https://wayland-book.com/protocol-design/wire-protocol.html
-mod connect;
+pub(crate) mod connect;
+pub mod event_loop;
 mod window;
 
 pub use connect::connect;

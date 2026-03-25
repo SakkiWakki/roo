@@ -1,5 +1,5 @@
-mod server;
-mod handler;
 mod client;
+mod handler;
+mod server;
 
 pub use client::WlRegistry;

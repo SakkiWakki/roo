@@ -13,7 +13,7 @@ pub struct Window {
 
 impl Window {
     pub fn run(&mut self) -> Result<(), std::io::Error> {
-        // I'm not sure if the compiler can inline these because it is prby possible 
+        // I'm not sure if the compiler can inline these because it is prby possible
         // But I'm assuming that a compiler does not inline these
         // But also socket reads are quite expensive so I don't think it matters
         // TODO: Vulkan stuff

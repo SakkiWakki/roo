@@ -45,7 +45,7 @@ pub fn send_with_fd(stream: &mut UnixStream, msg: &[u8], fd: i32) -> Result<(), 
 
 pub fn create_memfd(size: usize) -> Result<(i32, *mut u8), std::io::Error> {
     unsafe {
-        let fd = libc::memfd_create(b"wl-buffer\0".as_ptr() as *const _, 0);
+        let fd = libc::memfd_create(b"wl-buffer\0".as_ptr() as *const _, libc::MFD_CLOEXEC);
         if fd == -1 {
             // Even without this check, it should still fail on ftruncate
             return Err(std::io::Error::last_os_error());
@@ -67,5 +67,22 @@ pub fn create_memfd(size: usize) -> Result<(i32, *mut u8), std::io::Error> {
             return Err(std::io::Error::last_os_error());
         }
         Ok((fd, ptr as *mut u8))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn memfd_has_cloexec() {
+        let (fd, ptr) = create_memfd(4096).expect("create_memfd failed");
+        unsafe {
+            let flags = libc::fcntl(fd, libc::F_GETFD);
+            assert!(flags != -1, "fcntl failed");
+            assert!(flags & libc::FD_CLOEXEC != 0, "FD_CLOEXEC not set");
+            libc::munmap(ptr as *mut _, 4096);
+            libc::close(fd);
+        }
     }
 }

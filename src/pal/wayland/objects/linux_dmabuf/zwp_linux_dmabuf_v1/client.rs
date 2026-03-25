@@ -22,13 +22,22 @@ impl ZwpLinuxDmabufV1 {
         stream.write_all(&msg)
     }
 
-    pub fn get_default_feedback(&self, stream: &mut UnixStream, new_id: u32) {
+    pub fn get_default_feedback(
+        &self,
+        stream: &mut UnixStream,
+        new_id: u32,
+    ) -> Result<(), std::io::Error> {
         let msg = write_msg!(self.id, Self::GET_DEFAULT_FEEDBACK, new_id);
-        stream.write_all(&msg);
+        stream.write_all(&msg)
     }
 
-    pub fn get_surface_feedback(&self, stream: &mut UnixStream, new_id: u32, surface_id: u32) {
+    pub fn get_surface_feedback(
+        &self,
+        stream: &mut UnixStream,
+        new_id: u32,
+        surface_id: u32,
+    ) -> Result<(), std::io::Error> {
         let msg = write_msg!(self.id, Self::GET_SURFACE_FEEDBACK, new_id, surface_id);
-        stream.write_all(&msg);
+        stream.write_all(&msg)
     }
 }

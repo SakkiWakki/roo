@@ -151,4 +151,20 @@ mod tests {
             );
         };
     }
+
+
+    #[test]
+    #[serial]
+    fn memfd_has_cloexec() {
+        let (fd, ptr) = create_memfd(4096).expect("create_memfd failed");
+        unsafe {
+            let flags = libc::fcntl(fd, libc::F_GETFD);
+            assert!(flags != -1, "fcntl failed");
+            assert!(flags & libc::FD_CLOEXEC != 0, "FD_CLOEXEC not set");
+            libc::munmap(ptr as *mut _, 4096);
+            libc::close(fd);
+        }
+    }
 }
+
+

@@ -69,20 +69,3 @@ pub fn create_memfd(size: usize) -> Result<(i32, *mut u8), std::io::Error> {
         Ok((fd, ptr as *mut u8))
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn memfd_has_cloexec() {
-        let (fd, ptr) = create_memfd(4096).expect("create_memfd failed");
-        unsafe {
-            let flags = libc::fcntl(fd, libc::F_GETFD);
-            assert!(flags != -1, "fcntl failed");
-            assert!(flags & libc::FD_CLOEXEC != 0, "FD_CLOEXEC not set");
-            libc::munmap(ptr as *mut _, 4096);
-            libc::close(fd);
-        }
-    }
-}

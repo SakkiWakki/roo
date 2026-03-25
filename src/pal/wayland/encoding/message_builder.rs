@@ -1,4 +1,4 @@
-use super::super::{ALIGN_MASK, NULL_TERMINATOR};
+use super::sizes::{ALIGN_MASK, NULL_TERMINATOR};
 
 pub trait MessageBuilder {
     fn write_u32(&mut self, val: u32);

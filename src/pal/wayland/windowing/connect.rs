@@ -8,7 +8,8 @@ use crate::pal::platform::objects::{
 };
 
 use super::super::encoding::{encode_bind, encode_op, MessageReader};
-use super::super::{base_ids, interfaces, WaylandGlobal};
+use super::super::types::{WaylandGlobal};
+use super::protocol::{base_ids, interfaces};
 use super::event_loop::{event_loop, EventContext};
 use super::window::Window;
 

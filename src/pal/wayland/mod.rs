@@ -1,11 +1,11 @@
 pub mod encoding;
 pub mod objects;
-pub mod types;
+mod types;
 pub mod windowing;
 
-pub use types::globals::*;
-pub use types::protocol::*;
-pub use types::sizes::*;
+pub use encoding::sizes::*;
+pub use types::*;
+pub use windowing::protocol::*;
 
 #[cfg(test)]
 mod tests {

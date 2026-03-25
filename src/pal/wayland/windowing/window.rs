@@ -2,7 +2,7 @@ use std::os::unix::net::UnixStream;
 
 use crate::pal::platform::objects::{WlDisplay, XdgSurface, XdgToplevel, XdgWmBase};
 
-use super::super::base_ids;
+use super::protocol::base_ids;
 use super::event_loop::{event_loop, EventContext};
 
 pub struct Window {

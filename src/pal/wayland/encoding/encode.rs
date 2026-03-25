@@ -1,4 +1,4 @@
-use super::super::{
+use super::sizes::{
     ALIGN_MASK, HEADER_SIZE, OBJECT_ID_SIZE, SIZE_SHIFT, STRING_HEADER_SIZE, U32_SIZE, UINT_SIZE,
 };
 use super::message_builder::MessageBuilder;

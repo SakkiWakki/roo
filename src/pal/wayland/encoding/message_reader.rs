@@ -1,4 +1,4 @@
-use super::super::{ALIGN_MASK, NULL_TERMINATOR, U32_SIZE};
+use super::sizes::{ALIGN_MASK, NULL_TERMINATOR, U32_SIZE};
 use std::io::{Cursor, Read};
 use std::os::unix::net::UnixStream;
 

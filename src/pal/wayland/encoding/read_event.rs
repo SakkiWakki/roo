@@ -1,4 +1,4 @@
-use super::super::{HEADER_SIZE, OPCODE_MASK, SIZE_SHIFT, U32_SIZE};
+use super::sizes::{HEADER_SIZE, OPCODE_MASK, SIZE_SHIFT, U32_SIZE};
 use crate::pal::platform::WaylandEvent;
 use std::io::Read;
 use std::os::unix::net::UnixStream;

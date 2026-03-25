@@ -152,7 +152,6 @@ mod tests {
         };
     }
 
-
     #[test]
     #[serial]
     fn memfd_has_cloexec() {
@@ -166,5 +165,3 @@ mod tests {
         }
     }
 }
-
-

@@ -21,7 +21,6 @@ impl WlWrite for &str {
     }
 }
 
-
 #[macro_export]
 macro_rules! write_msg {
     ($obj_id:expr, $opcode:expr $(, $val:expr)*) => {{

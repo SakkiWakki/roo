@@ -1,7 +1,7 @@
-use crate::write_msg;
 use super::super::super::helper::{create_memfd, send_with_fd};
 use super::super::wl_buffer::WlBuffer;
 use super::super::wl_shm_pool::WlShmPool;
+use crate::write_msg;
 use std::os::unix::net::UnixStream;
 
 pub struct WlShm {

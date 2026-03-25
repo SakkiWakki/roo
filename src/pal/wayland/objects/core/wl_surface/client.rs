@@ -25,7 +25,14 @@ impl WlSurface {
         width: i32,
         height: i32,
     ) -> Result<(), std::io::Error> {
-        let msg = write_msg!(self.id, Self::DAMAGE, x as u32, y as u32, width as u32, height as u32);
+        let msg = write_msg!(
+            self.id,
+            Self::DAMAGE,
+            x as u32,
+            y as u32,
+            width as u32,
+            height as u32
+        );
         stream.write_all(&msg)?;
         Ok(())
     }

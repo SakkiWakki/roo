@@ -21,8 +21,14 @@ impl WlShmPool {
         format: u32,
     ) -> Result<(), std::io::Error> {
         let msg = write_msg!(
-            self.id, Self::CREATE_BUFFER,
-            new_id, offset as u32, width as u32, height as u32, stride as u32, format
+            self.id,
+            Self::CREATE_BUFFER,
+            new_id,
+            offset as u32,
+            width as u32,
+            height as u32,
+            stride as u32,
+            format
         );
         stream.write_all(&msg)?;
         Ok(())

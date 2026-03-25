@@ -1,4 +1,5 @@
-use super::super::super::super::encoding::MessageReader;
+use super::super::super::super::encoding::WlRead;
+use crate::read_msg;
 use std::io::Cursor;
 
 pub struct XdgToplevel;
@@ -49,12 +50,11 @@ pub struct ToplevelConfigure {
 impl ToplevelConfigure {
     pub fn parse(data: &[u8]) -> Self {
         let mut cursor = Cursor::new(data);
-        let width = cursor.read_u32() as i32;
-        let height = cursor.read_u32() as i32;
-        let array_len = cursor.read_u32() as i32;
-        let num_states = array_len >> 2;
+        let (width, height, array_len) = read_msg!(cursor, u32, u32, u32);
+        let (width, height) = (width as i32, height as i32);
+        let num_states = array_len as i32 >> 2;
         let states = (0..num_states)
-            .filter_map(|_| ToplevelState::try_from(cursor.read_u32()).ok())
+            .filter_map(|_| ToplevelState::try_from(u32::wl_read(&mut cursor)).ok())
             .collect();
         Self {
             width,

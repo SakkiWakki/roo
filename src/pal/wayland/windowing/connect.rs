@@ -7,13 +7,11 @@ use crate::pal::platform::objects::{
     XdgWmBase, ZxdgDecorationManager, ZxdgToplevelDecoration,
 };
 
-use super::super::encoding::{encode_bind, encode_op, MessageReader};
-use super::super::types::{WaylandGlobal};
-use super::protocol::{base_ids, interfaces};
+use super::super::encoding::{encode_bind, encode_op};
+use super::super::types::WaylandGlobal;
 use super::event_loop::{event_loop, EventContext};
+use super::protocol::{base_ids, interfaces};
 use super::window::Window;
-
-use std::io::Cursor;
 
 pub fn connect() -> Result<Window, std::io::Error> {
     let runtime_dir = env::var("XDG_RUNTIME_DIR")

@@ -15,7 +15,12 @@ impl ZxdgDecorationManager {
         new_id: u32,
         xdg_toplevel_id: u32,
     ) -> Result<(), std::io::Error> {
-        let msg = write_msg!(self.id, Self::GET_TOPLEVEL_DECORATION, new_id, xdg_toplevel_id);
+        let msg = write_msg!(
+            self.id,
+            Self::GET_TOPLEVEL_DECORATION,
+            new_id,
+            xdg_toplevel_id
+        );
         stream.write_all(&msg)?;
         Ok(())
     }

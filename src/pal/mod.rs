@@ -4,4 +4,4 @@
 #[cfg_attr(target_os = "windows", path = "windows/mod.rs")]
 mod platform;
 
-pub use platform::windowing::connect;
+pub(crate) use platform::windowing::connect;

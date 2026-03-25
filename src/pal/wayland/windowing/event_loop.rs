@@ -2,6 +2,7 @@ use std::os::unix::net::UnixStream;
 
 use super::super::encoding::read_event;
 use super::super::objects::{ToplevelConfigure, WlBuffer, WlShm, WlSurface, XdgSurface, XdgWmBase};
+use super::super::types::Fd;
 
 pub enum LoopAction {
     Continue,
@@ -24,14 +25,15 @@ pub fn event_loop<Ctx>(
     handlers: &[(
         u32,
         u16,
-        fn(&[u8], &mut Ctx, &mut UnixStream) -> Result<LoopAction, std::io::Error>,
+        fn(&[u8], Option<Fd>, &mut Ctx, &mut UnixStream) -> Result<LoopAction, std::io::Error>,
     )],
 ) -> Result<(), std::io::Error> {
     loop {
         let event = read_event(stream)?;
+        let fd = event.fd;
         for &(obj_id, opcode, handler) in handlers {
             if event.obj_id == obj_id && event.opcode == opcode {
-                match handler(&event.data, ctx, stream)? {
+                match handler(&event.data, fd, ctx, stream)? {
                     LoopAction::Continue => {}
                     LoopAction::Break => return Ok(()),
                 }

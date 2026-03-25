@@ -1,3 +1,4 @@
+use crate::pal::platform::types::Fd;
 use crate::write_msg;
 use std::io::Write;
 use std::os::unix::net::UnixStream;
@@ -12,16 +13,26 @@ impl ZwpLinuxBufferParamsV1 {
     const CREATE_IMMED: u32 = 3;
 
     pub fn add(
+        &self,
         stream: &mut UnixStream,
-        fd: u32,
+        fd: Fd,
         plane_idx: u32,
         offset: u32,
         stride: u32,
         modifier_hi: u32,
         modifier_lo: u32,
-    ) {
-        let msg = write_msg!(fd, plane_idx, offset, stride, modifier_hi, modifier_lo);
-        stream.write_all(&msg);
+    ) -> Result<(), std::io::Error> {
+        use crate::pal::platform::objects::helper::send_with_fd;
+        let msg = write_msg!(
+            self.id,
+            Self::ADD,
+            plane_idx,
+            offset,
+            stride,
+            modifier_hi,
+            modifier_lo
+        );
+        send_with_fd(stream, &msg, fd)
     }
 
     pub fn create(

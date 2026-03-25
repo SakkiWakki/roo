@@ -25,7 +25,7 @@ mod tests {
         assert!(!ptr.is_null());
 
         unsafe {
-            libc::close(fd);
+            libc::close(fd.0);
             *ptr = 0xAA;
             assert_eq!(*ptr, 0xAA);
             *ptr.add(size - 1) = 0xBB;
@@ -54,7 +54,7 @@ mod tests {
         for _ in 0..100 {
             let (fd, ptr) = create_memfd(4096).expect("create_memfd failed");
             unsafe {
-                libc::close(fd);
+                libc::close(fd.0);
                 libc::munmap(ptr as *mut _, 4096);
             }
         }
@@ -77,7 +77,7 @@ mod tests {
                     for _ in 0..100 {
                         let (fd, ptr) = create_memfd(4096).expect("create_memfd failed");
                         unsafe {
-                            libc::close(fd);
+                            libc::close(fd.0);
                             libc::munmap(ptr as *mut _, 4096);
                         }
                     }
@@ -132,7 +132,7 @@ mod tests {
         let size: usize = 4096;
         let (fd, ptr) = create_memfd(size).expect("create_memfd failed");
         unsafe {
-            libc::close(fd);
+            libc::close(fd.0);
 
             {
                 let buf = WlBuffer { id: 0, ptr, size };
@@ -157,11 +157,11 @@ mod tests {
     fn memfd_has_cloexec() {
         let (fd, ptr) = create_memfd(4096).expect("create_memfd failed");
         unsafe {
-            let flags = libc::fcntl(fd, libc::F_GETFD);
+            let flags = libc::fcntl(fd.0, libc::F_GETFD);
             assert!(flags != -1, "fcntl failed");
             assert!(flags & libc::FD_CLOEXEC != 0, "FD_CLOEXEC not set");
             libc::munmap(ptr as *mut _, 4096);
-            libc::close(fd);
+            libc::close(fd.0);
         }
     }
 }

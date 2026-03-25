@@ -1,5 +1,6 @@
 use std::os::unix::net::UnixStream;
-
+use crate::read_at;
+use super::super::super::super::types::Fd;
 use super::super::super::super::windowing::connect::setup_buffer;
 use super::super::super::super::windowing::event_loop::{EventContext, LoopAction};
 use super::client::XdgSurface;
@@ -7,10 +8,11 @@ use super::client::XdgSurface;
 impl XdgSurface {
     pub fn handle_configure(
         data: &[u8],
+        _fd: Option<Fd>,
         ctx: &mut EventContext,
         stream: &mut UnixStream,
     ) -> Result<LoopAction, std::io::Error> {
-        let serial = u32::from_ne_bytes(data[0..4].try_into().unwrap());
+        let serial = read_at!(data, 0, u32);
         if let Some(top_config) = ctx.top_config_tmp.take() {
             ctx.wl_buffer = setup_buffer(
                 stream,
@@ -28,10 +30,11 @@ impl XdgSurface {
 
     pub fn handle_configure_serial(
         data: &[u8],
+        _fd: Option<Fd>,
         ctx: &mut Option<u32>,
         _stream: &mut UnixStream,
     ) -> Result<LoopAction, std::io::Error> {
-        let serial = u32::from_ne_bytes(data[0..4].try_into().unwrap());
+        let serial = read_at!(data, 0, u32);
         *ctx = Some(serial);
         Ok(LoopAction::Break)
     }

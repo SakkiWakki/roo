@@ -1,3 +1,4 @@
+use super::super::super::super::types::Fd;
 use super::super::super::helper::{create_memfd, send_with_fd};
 use super::super::wl_buffer::WlBuffer;
 use super::super::wl_shm_pool::WlShmPool;
@@ -15,7 +16,7 @@ impl WlShm {
     pub fn create_pool(
         &self,
         stream: &mut UnixStream,
-        fd: i32,
+        fd: Fd,
         size: i32,
         new_id: u32,
     ) -> Result<(), std::io::Error> {
@@ -36,8 +37,8 @@ impl WlShm {
 
         let (fd, ptr) = create_memfd(size)?;
 
-        self.create_pool(stream, fd, size as i32, new_pool_id)?;
-        unsafe { libc::close(fd) };
+        self.create_pool(stream, Fd(fd.0), size as i32, new_pool_id)?;
+        unsafe { libc::close(fd.0) };
         let pool = WlShmPool { id: new_pool_id };
         pool.create_buffer(
             stream,

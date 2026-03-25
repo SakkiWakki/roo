@@ -3,10 +3,12 @@ use std::io::Write;
 use std::os::unix::net::UnixStream;
 
 use crate::pal::platform::objects::{
-    WlBuffer, WlCallback, WlCompositor, WlDisplay, WlRegistry, WlShm, WlSurface, XdgSurface,
-    XdgWmBase, ZwpLinuxDmabufV1, ZxdgDecorationManager, ZxdgToplevelDecoration,
+    FeedbackState, WlBuffer, WlCallback, WlCompositor, WlDisplay, WlRegistry, WlShm, WlSurface,
+    XdgSurface, XdgWmBase, ZwpLinuxDmabufFeedbackV1, ZwpLinuxDmabufV1, ZxdgDecorationManager,
+    ZxdgToplevelDecoration,
 };
 use crate::pal::platform::windowing::bind::Bind;
+use crate::pal::platform::DmabufFeedback;
 
 use super::super::encoding::{encode_bind, encode_op};
 use super::super::types::WaylandGlobal;
@@ -23,8 +25,8 @@ pub fn connect() -> Result<Window, std::io::Error> {
     let mut stream = UnixStream::connect(&socket_path)?;
     let mut id_counter: u32 = base_ids::ZWP_LINUX_DMABUF + 1;
 
-    let (compositor, wl_shm, xdg_wm_base, zxdg_deco_manager, _dmabuf) = setup_globals(&mut stream)?;
-
+    let (compositor, wl_shm, xdg_wm_base, zxdg_deco_manager, dmabuf) = setup_globals(&mut stream)?;
+    let feedback = dmabuf_feedback(&mut stream, &mut id_counter, &dmabuf)?;
     let wl_surface = create_wl_surface(&mut stream, &mut id_counter, &compositor)?;
     let xdg_surface = create_xdg_surface(&mut stream, &mut id_counter, &xdg_wm_base, &wl_surface)?;
     let xdg_toplevel_id = create_xdg_toplevel(&mut stream, &mut id_counter, &xdg_surface)?;
@@ -131,6 +133,50 @@ fn setup_decoration(
     zxdg_deco_manager.get_toplevel_decoration(stream, zxdg_deco_id, xdg_toplevel_id)?;
     let zxdg_top_deco = ZxdgToplevelDecoration { id: zxdg_deco_id };
     zxdg_top_deco.set_server_side_mode(stream)
+}
+
+fn dmabuf_feedback(
+    stream: &mut UnixStream,
+    id_counter: &mut u32,
+    dmabuf: &ZwpLinuxDmabufV1,
+) -> Result<DmabufFeedback, std::io::Error> {
+    let dmabuf_feedback_id = next_id(id_counter);
+    dmabuf.get_default_feedback(stream, dmabuf_feedback_id)?;
+    loop_until_feedback(stream, dmabuf_feedback_id)
+}
+
+fn loop_until_feedback(
+    stream: &mut UnixStream,
+    feedback_id: u32,
+) -> Result<DmabufFeedback, std::io::Error> {
+    let mut state = FeedbackState::default();
+    let handlers = [
+        (
+            feedback_id,
+            ZwpLinuxDmabufFeedbackV1::EVENT_MAIN_DEVICE,
+            ZwpLinuxDmabufFeedbackV1::handle_main_device as _,
+        ),
+        (
+            feedback_id,
+            ZwpLinuxDmabufFeedbackV1::EVENT_FORMAT_TABLE,
+            ZwpLinuxDmabufFeedbackV1::handle_format_table as _,
+        ),
+        (
+            feedback_id,
+            ZwpLinuxDmabufFeedbackV1::EVENT_TRANCHE_FORMATS,
+            ZwpLinuxDmabufFeedbackV1::handle_tranche_formats as _,
+        ),
+        (
+            feedback_id,
+            ZwpLinuxDmabufFeedbackV1::EVENT_DONE,
+            ZwpLinuxDmabufFeedbackV1::handle_done as _,
+        ),
+    ];
+    event_loop(stream, &mut state, &handlers)?;
+    Ok(DmabufFeedback {
+        main_device: state.main_device,
+        formats: state.formats,
+    })
 }
 
 fn wait_for_configure(stream: &mut UnixStream, xdg_surface_id: u32) -> Result<u32, std::io::Error> {

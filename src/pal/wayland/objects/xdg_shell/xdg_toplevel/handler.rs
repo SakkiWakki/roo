@@ -1,11 +1,13 @@
 use std::os::unix::net::UnixStream;
 
+use super::super::super::super::types::Fd;
 use super::super::super::super::windowing::event_loop::{EventContext, LoopAction};
 use super::server::{ToplevelConfigure, XdgToplevel};
 
 impl XdgToplevel {
     pub fn handle_close(
         _data: &[u8],
+        _fd: Option<Fd>,
         _ctx: &mut EventContext,
         _stream: &mut UnixStream,
     ) -> Result<LoopAction, std::io::Error> {
@@ -14,6 +16,7 @@ impl XdgToplevel {
 
     pub fn handle_configure(
         data: &[u8],
+        _fd: Option<Fd>,
         ctx: &mut EventContext,
         _stream: &mut UnixStream,
     ) -> Result<LoopAction, std::io::Error> {

@@ -1,5 +1,4 @@
-use super::super::super::super::encoding::{build_msg, MessageBuilder};
-use super::super::super::super::{HEADER_SIZE, U32_SIZE};
+use crate::write_msg;
 use super::super::super::helper::{create_memfd, send_with_fd};
 use super::super::wl_buffer::WlBuffer;
 use super::super::wl_shm_pool::WlShmPool;
@@ -20,10 +19,7 @@ impl WlShm {
         size: i32,
         new_id: u32,
     ) -> Result<(), std::io::Error> {
-        let msg_size: u32 = (HEADER_SIZE + U32_SIZE * 2) as u32;
-        let mut msg = build_msg(self.id, msg_size, Self::CREATE_POOL);
-        msg.write_u32(new_id);
-        msg.write_u32(size as u32);
+        let msg = write_msg!(self.id, Self::CREATE_POOL, new_id, size as u32);
         send_with_fd(stream, &msg, fd)
     }
 

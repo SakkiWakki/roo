@@ -1,3 +1,5 @@
+use std::os::unix::net::UnixStream;
+
 pub struct ZwpLinuxDmabufV1 {
     pub id: u32,
 }
@@ -12,7 +14,7 @@ impl ZwpLinuxDmabufV1 {
         unimplemented!();
     }
 
-    pub fn create_params() {
+    pub fn create_params(&self, stream: &mut UnixStream, params_id: u32) {
         unimplemented!();
     }
 

@@ -1,4 +1,4 @@
-mod events;
+mod server;
 mod handler;
 
-pub use events::WlCallback;
+pub use server::WlCallback;

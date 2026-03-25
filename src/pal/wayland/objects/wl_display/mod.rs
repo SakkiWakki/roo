@@ -1,5 +1,5 @@
-mod events;
+mod server;
 mod handler;
-mod requests;
+mod client;
 
-pub use requests::WlDisplay;
+pub use client::WlDisplay;

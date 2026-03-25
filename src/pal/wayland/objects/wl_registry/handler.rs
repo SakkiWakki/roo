@@ -4,7 +4,7 @@ use std::os::unix::net::UnixStream;
 use super::super::super::encoding::MessageReader;
 use super::super::super::windowing::event_loop::LoopAction;
 use super::super::super::WaylandGlobal;
-use super::requests::WlRegistry;
+use super::client::WlRegistry;
 
 impl WlRegistry {
     pub fn handle_global(

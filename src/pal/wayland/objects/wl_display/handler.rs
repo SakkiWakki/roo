@@ -3,7 +3,7 @@ use std::os::unix::net::UnixStream;
 
 use super::super::super::encoding::MessageReader;
 use super::super::super::windowing::event_loop::{EventContext, LoopAction};
-use super::requests::WlDisplay;
+use super::client::WlDisplay;
 
 impl WlDisplay {
     pub fn handle_error(

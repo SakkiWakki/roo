@@ -1,4 +1,4 @@
-use super::requests::WlRegistry;
+use super::client::WlRegistry;
 
 impl WlRegistry {
     pub const EVENT_GLOBAL: u16 = 0;

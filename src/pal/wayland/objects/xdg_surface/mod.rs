@@ -1,5 +1,5 @@
-mod events;
+mod server;
 mod handler;
-mod requests;
+mod client;
 
-pub use requests::XdgSurface;
+pub use client::XdgSurface;

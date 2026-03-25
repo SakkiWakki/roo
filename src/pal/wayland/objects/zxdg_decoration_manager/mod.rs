@@ -1,3 +1,3 @@
-mod requests;
+mod client;
 
-pub use requests::ZxdgDecorationManager;
+pub use client::ZxdgDecorationManager;

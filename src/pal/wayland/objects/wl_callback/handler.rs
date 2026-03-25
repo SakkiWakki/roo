@@ -2,7 +2,7 @@ use std::os::unix::net::UnixStream;
 
 use super::super::super::windowing::event_loop::LoopAction;
 use super::super::super::WaylandGlobal;
-use super::events::WlCallback;
+use super::server::WlCallback;
 
 impl WlCallback {
     pub fn handle_sync_done(

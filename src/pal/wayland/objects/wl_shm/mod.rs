@@ -1,3 +1,3 @@
-mod requests;
+mod client;
 
-pub use requests::WlShm;
+pub use client::WlShm;

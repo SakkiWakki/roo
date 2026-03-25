@@ -1,3 +1,3 @@
-mod requests;
+mod client;
 
-pub use requests::WlSurface;
+pub use client::WlSurface;

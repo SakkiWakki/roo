@@ -1,4 +1,4 @@
-mod events;
+mod server;
 mod handler;
 
-pub use events::{ToplevelConfigure, ToplevelState, XdgToplevel};
+pub use server::{ToplevelConfigure, ToplevelState, XdgToplevel};

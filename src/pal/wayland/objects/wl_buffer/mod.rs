@@ -1,3 +1,3 @@
-mod requests;
+mod client;
 
-pub use requests::WlBuffer;
+pub use client::WlBuffer;

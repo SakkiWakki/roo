@@ -2,7 +2,7 @@ use std::os::unix::net::UnixStream;
 
 use super::super::super::windowing::connect::setup_buffer;
 use super::super::super::windowing::event_loop::{EventContext, LoopAction};
-use super::requests::XdgSurface;
+use super::client::XdgSurface;
 
 impl XdgSurface {
     pub fn handle_configure(

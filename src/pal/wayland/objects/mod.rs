@@ -12,6 +12,9 @@ mod xdg_toplevel;
 mod xdg_wm_base;
 mod zxdg_decoration_manager;
 mod zxdg_toplevel_decoration;
+mod zwp_linux_dmabuf_v1;
+mod zwp_linux_buffer_params_v1;
+mod zwp_linux_dmabuf_feedback_v1;
 
 pub use helper::create_memfd;
 pub use wl_buffer::WlBuffer;
@@ -26,3 +29,6 @@ pub use xdg_toplevel::{ToplevelConfigure, ToplevelState, XdgToplevel};
 pub use xdg_wm_base::XdgWmBase;
 pub use zxdg_decoration_manager::ZxdgDecorationManager;
 pub use zxdg_toplevel_decoration::ZxdgToplevelDecoration;
+pub use zwp_linux_dmabuf_v1::ZwpLinuxDmabufV1;
+pub use zwp_linux_buffer_params_v1::ZwpLinuxBufferParamsV1;
+pub use zwp_linux_dmabuf_feedback_v1::ZwpLinuxDmabufFeedbackV1;

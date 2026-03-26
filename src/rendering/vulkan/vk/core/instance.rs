@@ -1,25 +1,40 @@
 use std::ffi::c_void;
 
 use super::ffi::{
-    VkApplicationInfo, VkDebugUtilsMessengerCreateInfoEXT, VkInstance, VkInstanceCreateInfo,
-    VkResult, VkStructureType,
+    VkApplicationInfo, VkDebugUtilsMessengerCreateInfoEXT, VkDebugUtilsMessengerEXT,
+    VkInstance, VkInstanceCreateInfo, VkResult, VkStructureType,
 };
-use super::loader::VulkanLoader;
+use super::loader::{InstanceLoader, VulkanLoader};
 use VkStructureType::*;
 
 const LAYERS: &[*const u8] = &[b"VK_LAYER_KHRONOS_validation\0".as_ptr()];
 const EXTENSIONS: &[*const u8] = &[b"VK_EXT_debug_utils\0".as_ptr()];
 
-pub fn create_instance(loader: &VulkanLoader, debug_info: &VkDebugUtilsMessengerCreateInfoEXT) -> VkInstance {
+pub struct Instance {
+    pub handle: VkInstance,
+    pub loader: InstanceLoader,
+    pub debug_messenger: VkDebugUtilsMessengerEXT,
+}
+
+pub fn create_instance(vk: &VulkanLoader, debug_info: &VkDebugUtilsMessengerCreateInfoEXT) -> Instance {
     let app_info = create_app_info();
     let create_info = create_instance_create_info(&app_info, debug_info);
 
-    let mut instance = std::ptr::null_mut();
+    let mut handle = std::ptr::null_mut();
     let result = unsafe {
-        (loader.create_instance.ptr)(&create_info, std::ptr::null(), &mut instance)
+        (vk.create_instance.ptr)(&create_info, std::ptr::null(), &mut handle)
     };
     assert!(matches!(result, VkResult::Success));
-    instance
+
+    let loader = InstanceLoader::load(vk, handle);
+
+    let mut debug_messenger = std::ptr::null_mut();
+    let result = unsafe {
+        (loader.create_debug_utils_messenger)(handle, debug_info, std::ptr::null(), &mut debug_messenger)
+    };
+    assert!(matches!(result, VkResult::Success));
+
+    Instance { handle, loader, debug_messenger }
 }
 
 pub fn create_app_info() -> VkApplicationInfo {

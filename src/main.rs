@@ -13,10 +13,10 @@ fn main() -> Result<(), std::io::Error> {
 
     let loader = pal::LinuxLoader::open("libvulkan.so.1");
     let vk = VulkanLoader::load(&loader);
-
     let debug_info = create_debug_info();
+    
     let instance = create_instance(&vk, &debug_info);
-    println!("VkInstance: {:p}", instance);
+    println!("VkInstance: {:p}", instance.handle);
 
     window.run()
 }

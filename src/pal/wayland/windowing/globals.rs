@@ -104,6 +104,7 @@ fn supported_version(interface: &str) -> u32 {
         interfaces::WL_SHM => 1,
         interfaces::XDG_WM_BASE => 2,
         interfaces::ZXDG_DECORATION_MANAGER => 1,
+        interfaces::ZWP_LINUX_DMABUF => 4,
         _ => 1,
     }
 }

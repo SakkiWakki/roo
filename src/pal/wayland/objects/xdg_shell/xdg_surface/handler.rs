@@ -1,5 +1,5 @@
 use super::super::super::super::types::Fd;
-use super::super::super::super::windowing::connect::setup_buffer;
+use super::super::super::super::windowing::buffer::setup_buffer;
 use super::super::super::super::windowing::event_loop::{EventContext, LoopAction};
 use super::client::XdgSurface;
 use crate::read_at;

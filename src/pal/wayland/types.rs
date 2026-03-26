@@ -26,12 +26,11 @@ impl Default for Tranche {
     fn default() -> Self {
         Self {
             target_device: 0,
-            formats: Vec::new(), 
-            flags: 0
+            formats: Vec::new(),
+            flags: 0,
         }
     }
 }
-
 
 pub struct DmabufFeedback {
     pub main_device: u64,

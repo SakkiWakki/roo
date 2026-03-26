@@ -18,7 +18,7 @@ impl Default for FeedbackState {
             main_device: 0,
             format_table: Vec::new(),
             tranches: Vec::new(),
-            current_tranche: Tranche::default()
+            current_tranche: Tranche::default(),
         }
     }
 }
@@ -88,9 +88,7 @@ impl ZwpLinuxDmabufFeedbackV1 {
         state: &mut FeedbackState,
         _stream: &mut UnixStream,
     ) -> Result<LoopAction, std::io::Error> {
-        let tranche_new = std::mem::replace(
-            &mut state.current_tranche, Tranche::default()
-        );
+        let tranche_new = std::mem::replace(&mut state.current_tranche, Tranche::default());
         state.tranches.push(tranche_new);
         Ok(LoopAction::Continue)
     }

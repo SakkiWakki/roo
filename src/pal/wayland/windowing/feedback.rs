@@ -76,5 +76,8 @@ pub fn open_drm_device(main_device: u64) -> Result<File, Error> {
             return File::open(entry.path());
         }
     }
-    Err(Error::new(ErrorKind::NotFound, "no DRM device matches main_device"))
+    Err(Error::new(
+        ErrorKind::NotFound,
+        "no DRM device matches main_device",
+    ))
 }

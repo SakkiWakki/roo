@@ -1,10 +1,9 @@
 use std::env;
 use std::os::unix::net::UnixStream;
 
-use crate::pal::platform::objects::{XdgSurface};
+use crate::pal::platform::objects::XdgSurface;
 use crate::pal::platform::windowing::feedback::open_drm_device;
-use std::fs::{File};
-
+use std::fs::File;
 
 use super::buffer::setup_buffer;
 use super::event_loop::{event_loop, EventContext};
@@ -25,14 +24,18 @@ pub fn connect() -> Result<Window, std::io::Error> {
     let mut stream = UnixStream::connect(&socket_path)?;
     let mut id_counter: u32 = base_ids::ZWP_LINUX_DMABUF + 1;
 
-    let (compositor, wl_shm, xdg_wm_base, zxdg_deco_manager, dmabuf) =
-        setup_globals(&mut stream)?;
+    let (compositor, wl_shm, xdg_wm_base, zxdg_deco_manager, dmabuf) = setup_globals(&mut stream)?;
     let _feedback = dmabuf_feedback(&mut stream, &mut id_counter, &dmabuf)?;
     let drm_device = open_drm_device(_feedback.main_device)?;
     let wl_surface = create_wl_surface(&mut stream, &mut id_counter, &compositor)?;
     let xdg_surface = create_xdg_surface(&mut stream, &mut id_counter, &xdg_wm_base, &wl_surface)?;
     let xdg_toplevel_id = create_xdg_toplevel(&mut stream, &mut id_counter, &xdg_surface)?;
-    setup_decoration(&mut stream, &mut id_counter, &zxdg_deco_manager, xdg_toplevel_id)?;
+    setup_decoration(
+        &mut stream,
+        &mut id_counter,
+        &zxdg_deco_manager,
+        xdg_toplevel_id,
+    )?;
 
     wl_surface.commit(&mut stream)?;
     let serial = wait_for_configure(&mut stream, xdg_surface.id)?;

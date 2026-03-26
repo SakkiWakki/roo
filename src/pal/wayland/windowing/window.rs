@@ -1,5 +1,5 @@
+use std::fs::File;
 use std::os::unix::net::UnixStream;
-use std::fs::{File};
 
 use crate::pal::platform::objects::{WlDisplay, XdgSurface, XdgToplevel, XdgWmBase};
 use crate::pal::GpuInfo;

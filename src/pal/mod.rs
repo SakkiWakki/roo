@@ -7,7 +7,10 @@ mod platform;
 pub(crate) use platform::windowing::connect;
 pub use platform::windowing::Window;
 
-use std::ffi::c_void;
+#[cfg(target_os = "linux")]
+pub mod linux;
+#[cfg(target_os = "linux")]
+pub use linux::{LinuxLoader, Symbol};
 
 // Rendering stuff
 pub struct GpuInfo {

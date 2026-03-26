@@ -2,13 +2,12 @@ use std::env;
 use std::os::unix::net::UnixStream;
 
 use crate::pal::platform::objects::XdgSurface;
-use crate::pal::platform::windowing::feedback::open_drm_device;
 use crate::pal::platform::types::TRANCHE_FLAG_SCANOUT;
+use crate::pal::platform::windowing::feedback::open_drm_device;
 use crate::pal::SupportedFormat;
 
 use super::buffer::setup_buffer;
 use super::event_loop::{event_loop, EventContext};
-use super::window::{DEFAULT_HEIGHT, DEFAULT_WIDTH};
 use super::feedback::dmabuf_feedback;
 use super::globals::setup_globals;
 use super::protocol::base_ids;
@@ -16,6 +15,7 @@ use super::surfaces::{
     create_wl_surface, create_xdg_surface, create_xdg_toplevel, setup_decoration,
 };
 use super::window::Window;
+use super::window::{DEFAULT_HEIGHT, DEFAULT_WIDTH};
 
 pub fn connect() -> Result<Window, std::io::Error> {
     let runtime_dir = env::var("XDG_RUNTIME_DIR")
@@ -29,11 +29,29 @@ pub fn connect() -> Result<Window, std::io::Error> {
     let (compositor, wl_shm, xdg_wm_base, zxdg_deco_manager, dmabuf) = setup_globals(&mut stream)?;
     let feedback = dmabuf_feedback(&mut stream, &mut id_counter, &dmabuf)?;
     let drm_device = open_drm_device(feedback.main_device)?;
-    let formats: Vec<SupportedFormat> = feedback.tranches.iter()
+    let scanout: Vec<SupportedFormat> = feedback
+        .tranches
+        .iter()
         .filter(|t| t.flags & TRANCHE_FLAG_SCANOUT != 0)
         .flat_map(|t| t.formats.iter())
-        .map(|&(drm_format, modifier)| SupportedFormat { drm_format, modifier })
+        .map(|&(drm_format, modifier)| SupportedFormat {
+            drm_format,
+            modifier,
+        })
         .collect();
+    let formats: Vec<SupportedFormat> = if !scanout.is_empty() {
+        scanout
+    } else {
+        feedback
+            .tranches
+            .iter()
+            .flat_map(|t| t.formats.iter())
+            .map(|&(drm_format, modifier)| SupportedFormat {
+                drm_format,
+                modifier,
+            })
+            .collect()
+    };
     let wl_surface = create_wl_surface(&mut stream, &mut id_counter, &compositor)?;
     let xdg_surface = create_xdg_surface(&mut stream, &mut id_counter, &xdg_wm_base, &wl_surface)?;
     let xdg_toplevel_id = create_xdg_toplevel(&mut stream, &mut id_counter, &xdg_surface)?;
@@ -47,7 +65,13 @@ pub fn connect() -> Result<Window, std::io::Error> {
     wl_surface.commit(&mut stream)?;
     let serial = wait_for_configure(&mut stream, xdg_surface.id)?;
 
-    let wl_buffer = setup_buffer(&mut stream, &mut id_counter, &wl_shm, DEFAULT_WIDTH as i32, DEFAULT_HEIGHT as i32)?;
+    let wl_buffer = setup_buffer(
+        &mut stream,
+        &mut id_counter,
+        &wl_shm,
+        DEFAULT_WIDTH as i32,
+        DEFAULT_HEIGHT as i32,
+    )?;
     wl_surface.attach(&mut stream, wl_buffer.id)?;
     xdg_surface.ack_configure(&mut stream, serial)?;
     wl_surface.commit(&mut stream)?;
@@ -56,6 +80,7 @@ pub fn connect() -> Result<Window, std::io::Error> {
         stream,
         toplevel_id: xdg_toplevel_id,
         drm_device: Some(drm_device),
+        dmabuf,
         ctx: EventContext {
             xdg_wm_base,
             xdg_surface,

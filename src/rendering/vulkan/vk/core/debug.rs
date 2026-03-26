@@ -1,9 +1,8 @@
 use std::ffi::c_void;
 
 use super::ffi::{
-    message_type, severity, VkDebugUtilsMessageSeverityFlagsEXT,
-    VkDebugUtilsMessageTypeFlagsEXT, VkDebugUtilsMessengerCallbackDataEXT,
-    VkDebugUtilsMessengerCreateInfoEXT, VkStructureType,
+    message_type, severity, VkDebugUtilsMessageSeverityFlagsEXT, VkDebugUtilsMessageTypeFlagsEXT,
+    VkDebugUtilsMessengerCallbackDataEXT, VkDebugUtilsMessengerCreateInfoEXT, VkStructureType,
 };
 
 pub fn create_debug_info() -> VkDebugUtilsMessengerCreateInfoEXT {

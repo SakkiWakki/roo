@@ -1,9 +1,9 @@
 use std::os::unix::net::UnixStream;
 
 use super::super::encoding::read_event;
-use crate::pal::SupportedFormat;
 use super::super::objects::{ToplevelConfigure, WlBuffer, WlShm, WlSurface, XdgSurface, XdgWmBase};
 use super::super::types::Fd;
+use crate::pal::SupportedFormat;
 
 pub enum LoopAction {
     Continue,

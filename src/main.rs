@@ -25,7 +25,9 @@ fn main() -> Result<(), std::io::Error> {
         image,
     );
     let fd = export_dmabuf_fd(instance.device, &instance.device_loader, memory);
-    println!("dmabuf fd: {fd}");
-
+    let first_format = window.formats().first().expect("no formats");
+    let drm_format = first_format.drm_format;
+    let modifier = first_format.modifier;
+    window.import_dmabuf(fd, drm_format, modifier)?;
     window.run()
 }

@@ -16,6 +16,7 @@ pub trait PlatformWindow {
     fn resolution(&self) -> (u32, u32);
     fn gpu_info(&mut self) -> Option<GpuInfo>;
     fn formats(&self) -> &[SupportedFormat];
+    fn import_dmabuf(&mut self, fd: i32, format: u32, modifier: u64) -> Result<(), std::io::Error>;
     fn run(&mut self) -> Result<(), std::io::Error>;
 }
 

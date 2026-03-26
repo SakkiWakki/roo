@@ -17,6 +17,7 @@ const DEVICE_EXTENSIONS: &[*const u8] = &[
     b"VK_KHR_external_memory\0".as_ptr(),
     b"VK_KHR_external_memory_fd\0".as_ptr(),
     b"VK_EXT_external_memory_dma_buf\0".as_ptr(),
+    b"VK_KHR_image_format_list\0".as_ptr(),
     b"VK_EXT_image_drm_format_modifier\0".as_ptr(),
 ];
 

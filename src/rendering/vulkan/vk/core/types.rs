@@ -1,12 +1,12 @@
 use crate::rendering::vulkan::vk::core::ffi::VkMemoryRequirements;
 
 use super::ffi::{
-    VkDeviceCreateInfo, VkDeviceQueueCreateInfo, VkExportMemoryAllocateInfo,
-    VkExternalMemoryHandleTypeFlagBits, VkExternalMemoryImageCreateInfo, VkExtent3D,
-    VkFormat, VkImageCreateInfo, VkImageDrmFormatModifierExplicitCreateInfoEXT,
-    VkImageLayout, VkImageTiling, VkImageType, VkImageUsageFlags, VkMemoryAllocateInfo,
-    VkMemoryGetFdInfoKHR, VkDeviceMemory, VkPhysicalDeviceDrmPropertiesEXT,
-    VkPhysicalDeviceProperties2, VkSharingMode, VkStructureType, VkSubresourceLayout, 
+    VkDeviceCreateInfo, VkDeviceMemory, VkDeviceQueueCreateInfo, VkExportMemoryAllocateInfo,
+    VkExtent3D, VkExternalMemoryHandleTypeFlagBits, VkExternalMemoryImageCreateInfo, VkFormat,
+    VkImage, VkImageCreateInfo, VkImageDrmFormatModifierExplicitCreateInfoEXT, VkImageLayout,
+    VkImageTiling, VkImageType, VkImageUsageFlags, VkMemoryAllocateInfo,
+    VkMemoryDedicatedAllocateInfo, VkMemoryGetFdInfoKHR, VkPhysicalDeviceDrmPropertiesEXT,
+    VkPhysicalDeviceProperties2, VkSharingMode, VkStructureType, VkSubresourceLayout,
 };
 use std::ffi::c_void;
 
@@ -65,7 +65,13 @@ impl VkImageDrmFormatModifierExplicitCreateInfoEXT {
             pNext: std::ptr::null(),
             drmFormatModifier: modifier,
             drmFormatModifierPlaneCount: 1,
-            pPlaneLayouts: &VkSubresourceLayout { offset: 0, size: 0, rowPitch: 0, arrayPitch: 0, depthPitch: 0 },
+            pPlaneLayouts: &VkSubresourceLayout {
+                offset: 0,
+                size: 0,
+                rowPitch: 0,
+                arrayPitch: 0,
+                depthPitch: 0,
+            },
         }
     }
 }
@@ -85,7 +91,11 @@ impl VkImageCreateInfo {
             flags: 0,
             imageType: VkImageType::Type2D,
             format,
-            extent: VkExtent3D { width, height, depth: 1 },
+            extent: VkExtent3D {
+                width,
+                height,
+                depth: 1,
+            },
             mipLevels: 1,
             arrayLayers: 1,
             samples: 1,
@@ -109,11 +119,26 @@ impl VkExportMemoryAllocateInfo {
     }
 }
 
+impl VkMemoryDedicatedAllocateInfo {
+    pub fn new(image: VkImage, export: &VkExportMemoryAllocateInfo) -> Self {
+        Self {
+            sType: VkStructureType::MemoryDedicatedAllocateInfo,
+            pNext: export as *const _ as *const c_void,
+            image,
+            buffer: 0,
+        }
+    }
+}
+
 impl VkMemoryAllocateInfo {
-    pub fn new(size: u64, memory_type_index: u32, export: &VkExportMemoryAllocateInfo) -> Self {
+    pub fn new(
+        size: u64,
+        memory_type_index: u32,
+        dedicated: &VkMemoryDedicatedAllocateInfo,
+    ) -> Self {
         Self {
             sType: VkStructureType::MemoryAllocateInfo,
-            pNext: export as *const _ as *const c_void,
+            pNext: dedicated as *const _ as *const c_void,
             allocationSize: size,
             memoryTypeIndex: memory_type_index,
         }
@@ -150,10 +175,10 @@ impl VkDeviceCreateInfo {
 
 impl VkMemoryRequirements {
     pub fn new() -> Self {
-        Self { 
-            size: 0, 
-            alignment: 0, 
-            memoryTypeBits: 0 
+        Self {
+            size: 0,
+            alignment: 0,
+            memoryTypeBits: 0,
         }
     }
 }

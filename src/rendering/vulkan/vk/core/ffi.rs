@@ -39,18 +39,18 @@ pub type VkImageAspectFlags = u32;
 
 // Image usage flags
 pub mod image_usage {
-    pub const TRANSFER_SRC: u32       = 0x00000001;
-    pub const TRANSFER_DST: u32       = 0x00000002;
-    pub const COLOR_ATTACHMENT: u32   = 0x00000010;
-    pub const DEPTH_STENCIL: u32      = 0x00000020;
-    pub const SAMPLED: u32            = 0x00000004;
-    pub const STORAGE: u32            = 0x00000008;
+    pub const TRANSFER_SRC: u32 = 0x00000001;
+    pub const TRANSFER_DST: u32 = 0x00000002;
+    pub const COLOR_ATTACHMENT: u32 = 0x00000010;
+    pub const DEPTH_STENCIL: u32 = 0x00000020;
+    pub const SAMPLED: u32 = 0x00000004;
+    pub const STORAGE: u32 = 0x00000008;
 }
 
 // Memory property flags
 pub mod memory_property {
-    pub const DEVICE_LOCAL: u32  = 0x00000001;
-    pub const HOST_VISIBLE: u32  = 0x00000002;
+    pub const DEVICE_LOCAL: u32 = 0x00000001;
+    pub const HOST_VISIBLE: u32 = 0x00000002;
     pub const HOST_COHERENT: u32 = 0x00000004;
 }
 
@@ -97,6 +97,7 @@ pub enum VkStructureType {
     ApplicationInfo = 0,
     InstanceCreateInfo = 1,
     MemoryAllocateInfo = 5,
+    MemoryDedicatedAllocateInfo = 1000127001,
     ImageCreateInfo = 14,
     ImageViewCreateInfo = 15,
     RenderPassCreateInfo = 38,
@@ -254,6 +255,14 @@ pub struct VkPhysicalDeviceDrmPropertiesEXT {
 }
 
 // Memory structs
+#[repr(C)]
+pub struct VkMemoryDedicatedAllocateInfo {
+    pub sType: VkStructureType,
+    pub pNext: *const c_void,
+    pub image: VkImage,
+    pub buffer: u64, // VkBuffer, unused here
+}
+
 #[repr(C)]
 pub struct VkMemoryAllocateInfo {
     pub sType: VkStructureType,

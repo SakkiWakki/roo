@@ -1,12 +1,18 @@
+use std::ffi::c_void;
+
 use super::ffi::{
-    VkApplicationInfo, VkInstance, VkInstanceCreateInfo, VkResult, VkStructureType,
+    VkApplicationInfo, VkDebugUtilsMessengerCreateInfoEXT, VkInstance, VkInstanceCreateInfo,
+    VkResult, VkStructureType,
 };
 use super::loader::VulkanLoader;
 use VkStructureType::*;
 
-pub fn create_instance(loader: &VulkanLoader) -> VkInstance {
+const LAYERS: &[*const u8] = &[b"VK_LAYER_KHRONOS_validation\0".as_ptr()];
+const EXTENSIONS: &[*const u8] = &[b"VK_EXT_debug_utils\0".as_ptr()];
+
+pub fn create_instance(loader: &VulkanLoader, debug_info: &VkDebugUtilsMessengerCreateInfoEXT) -> VkInstance {
     let app_info = create_app_info();
-    let create_info = create_instance_create_info(&app_info);
+    let create_info = create_instance_create_info(&app_info, debug_info);
 
     let mut instance = std::ptr::null_mut();
     let result = unsafe {
@@ -18,7 +24,7 @@ pub fn create_instance(loader: &VulkanLoader) -> VkInstance {
 
 pub fn create_app_info() -> VkApplicationInfo {
     VkApplicationInfo {
-        sType: ApplicationInfo, 
+        sType: ApplicationInfo,
         pNext: std::ptr::null(),
         pApplicationName: b"roo\0".as_ptr() as _,
         applicationVersion: 1,
@@ -28,15 +34,18 @@ pub fn create_app_info() -> VkApplicationInfo {
     }
 }
 
-pub fn create_instance_create_info(app_info: &VkApplicationInfo) -> VkInstanceCreateInfo {
+pub fn create_instance_create_info<'a>(
+    app_info: &'a VkApplicationInfo,
+    debug_info: &'a VkDebugUtilsMessengerCreateInfoEXT,
+) -> VkInstanceCreateInfo {
     VkInstanceCreateInfo {
         sType: InstanceCreateInfo,
-        pNext: std::ptr::null(),
+        pNext: debug_info as *const _ as *const c_void,
         flags: 0,
         pApplicationInfo: app_info,
-        enabledLayerCount: 0,
-        ppEnabledLayerNames: std::ptr::null(),
-        enabledExtensionCount: 0,
-        ppEnabledExtensionNames: std::ptr::null(),
+        enabledLayerCount: LAYERS.len() as u32,
+        ppEnabledLayerNames: LAYERS.as_ptr() as _,
+        enabledExtensionCount: EXTENSIONS.len() as u32,
+        ppEnabledExtensionNames: EXTENSIONS.as_ptr() as _,
     }
 }

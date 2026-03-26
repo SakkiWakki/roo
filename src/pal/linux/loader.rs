@@ -5,7 +5,7 @@ pub struct LinuxLoader {
     handle: *mut c_void,
 }
 
-/// We add this so the compiler can have more explicit information about 
+/// We add this so the compiler can have more explicit information about
 /// the loader's lifetime for safety
 pub struct Symbol<'a, T> {
     pub ptr: T,

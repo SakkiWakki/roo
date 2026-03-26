@@ -2,8 +2,9 @@
 /// https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateInstance.html
 
 // TODO: Switch to generic loader later
-use create::pal::LinuxLoader;
-use super::ffi::{PFN_vkCreateInstance, PFN_vkGetInstanceProcAddr, VkInstance};
+use crate::pal::LinuxLoader;
+use super::ffi::{PFN_vkCreateInstance, PFN_vkGetInstanceProcAddr};
+use crate::pal::Symbol;
 
 pub struct VulkanLoader<'a> {
     pub get_instance_proc_addr: Symbol<'a, PFN_vkGetInstanceProcAddr>,

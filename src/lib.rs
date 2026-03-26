@@ -1,2 +1,3 @@
-#![allow(dead_code, unused_imports, unused_variables)]
+// #![allow(dead_code, unused_imports, unused_variables)]
 pub mod pal;
+pub mod rendering;

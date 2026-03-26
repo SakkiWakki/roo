@@ -17,11 +17,13 @@ const DEVICE_EXTENSIONS: &[*const u8] = &[
     b"VK_KHR_external_memory\0".as_ptr(),
     b"VK_KHR_external_memory_fd\0".as_ptr(),
     b"VK_EXT_external_memory_dma_buf\0".as_ptr(),
+    b"VK_EXT_image_drm_format_modifier\0".as_ptr(),
 ];
 
 pub struct Instance {
     pub handle: VkInstance,
     pub loader: InstanceLoader,
+    pub phys_device: VkPhysicalDevice,
     pub device: VkDevice,
     pub device_loader: DeviceLoader,
     pub debug_messenger: VkDebugUtilsMessengerEXT,
@@ -35,10 +37,11 @@ pub fn create_instance(
 ) -> Instance {
     let (handle, loader) = create_handle(vk, debug_info);
     let debug_messenger = create_debug_messenger(&loader, handle, debug_info);
-    let (device, device_loader) = get_device(&loader, handle, gpu_info);
+    let (phys_device, device, device_loader) = get_device(&loader, handle, gpu_info);
     Instance {
         handle,
         loader,
+        phys_device,
         device,
         device_loader,
         debug_messenger,
@@ -108,7 +111,7 @@ pub fn get_device(
     instance: &InstanceLoader,
     handle: VkInstance,
     gpu_info: &GpuInfo,
-) -> (VkDevice, DeviceLoader) {
+) -> (VkPhysicalDevice, VkDevice, DeviceLoader) {
     let gpu_meta = gpu_info.device_node.metadata().unwrap();
     let dev_num = gpu_meta.rdev();
     let major = libc::major(dev_num);
@@ -151,5 +154,5 @@ pub fn get_device(
         )
     };
     assert!(matches!(res, VkResult::Success));
-    (vk_device, DeviceLoader::load(instance, vk_device))
+    (phys_dev, vk_device, DeviceLoader::load(instance, vk_device))
 }

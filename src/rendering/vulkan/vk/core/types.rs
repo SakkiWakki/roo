@@ -1,6 +1,12 @@
+use crate::rendering::vulkan::vk::core::ffi::VkMemoryRequirements;
+
 use super::ffi::{
-    VkDeviceCreateInfo, VkDeviceQueueCreateInfo, VkPhysicalDeviceDrmPropertiesEXT,
-    VkPhysicalDeviceProperties2, VkStructureType,
+    VkDeviceCreateInfo, VkDeviceQueueCreateInfo, VkExportMemoryAllocateInfo,
+    VkExternalMemoryHandleTypeFlagBits, VkExternalMemoryImageCreateInfo, VkExtent3D,
+    VkFormat, VkImageCreateInfo, VkImageDrmFormatModifierExplicitCreateInfoEXT,
+    VkImageLayout, VkImageTiling, VkImageType, VkImageUsageFlags, VkMemoryAllocateInfo,
+    VkMemoryGetFdInfoKHR, VkDeviceMemory, VkPhysicalDeviceDrmPropertiesEXT,
+    VkPhysicalDeviceProperties2, VkSharingMode, VkStructureType, VkSubresourceLayout, 
 };
 use std::ffi::c_void;
 
@@ -42,6 +48,89 @@ impl VkDeviceQueueCreateInfo {
     }
 }
 
+impl VkExternalMemoryImageCreateInfo {
+    pub fn new() -> Self {
+        Self {
+            sType: VkStructureType::ExternalMemoryImageCreateInfo,
+            pNext: std::ptr::null(),
+            handleTypes: VkExternalMemoryHandleTypeFlagBits::DmaBufEXT as u32,
+        }
+    }
+}
+
+impl VkImageDrmFormatModifierExplicitCreateInfoEXT {
+    pub fn new(modifier: u64) -> Self {
+        Self {
+            sType: VkStructureType::ImageDrmFormatModifierExplicitCreateInfoEXT,
+            pNext: std::ptr::null(),
+            drmFormatModifier: modifier,
+            drmFormatModifierPlaneCount: 1,
+            pPlaneLayouts: &VkSubresourceLayout { offset: 0, size: 0, rowPitch: 0, arrayPitch: 0, depthPitch: 0 },
+        }
+    }
+}
+
+impl VkImageCreateInfo {
+    pub fn new(
+        width: u32,
+        height: u32,
+        format: VkFormat,
+        usage: VkImageUsageFlags,
+        external_memory: &VkExternalMemoryImageCreateInfo,
+        tiling: VkImageTiling,
+    ) -> Self {
+        Self {
+            sType: VkStructureType::ImageCreateInfo,
+            pNext: external_memory as *const _ as *const c_void,
+            flags: 0,
+            imageType: VkImageType::Type2D,
+            format,
+            extent: VkExtent3D { width, height, depth: 1 },
+            mipLevels: 1,
+            arrayLayers: 1,
+            samples: 1,
+            tiling,
+            usage,
+            sharingMode: VkSharingMode::Exclusive,
+            queueFamilyIndexCount: 0,
+            pQueueFamilyIndices: std::ptr::null(),
+            initialLayout: VkImageLayout::Undefined,
+        }
+    }
+}
+
+impl VkExportMemoryAllocateInfo {
+    pub fn new() -> Self {
+        Self {
+            sType: VkStructureType::ExportMemoryAllocateInfo,
+            pNext: std::ptr::null(),
+            handleTypes: VkExternalMemoryHandleTypeFlagBits::DmaBufEXT as u32,
+        }
+    }
+}
+
+impl VkMemoryAllocateInfo {
+    pub fn new(size: u64, memory_type_index: u32, export: &VkExportMemoryAllocateInfo) -> Self {
+        Self {
+            sType: VkStructureType::MemoryAllocateInfo,
+            pNext: export as *const _ as *const c_void,
+            allocationSize: size,
+            memoryTypeIndex: memory_type_index,
+        }
+    }
+}
+
+impl VkMemoryGetFdInfoKHR {
+    pub fn new(memory: VkDeviceMemory) -> Self {
+        Self {
+            sType: VkStructureType::MemoryGetFdInfoKHR,
+            pNext: std::ptr::null(),
+            memory,
+            handleType: VkExternalMemoryHandleTypeFlagBits::DmaBufEXT as u32,
+        }
+    }
+}
+
 impl VkDeviceCreateInfo {
     pub fn new(queue_info: &VkDeviceQueueCreateInfo, extensions: &[*const u8]) -> Self {
         Self {
@@ -55,6 +144,16 @@ impl VkDeviceCreateInfo {
             enabledExtensionCount: extensions.len() as u32,
             ppEnabledExtensionNames: extensions.as_ptr() as _,
             pEnabledFeatures: std::ptr::null(),
+        }
+    }
+}
+
+impl VkMemoryRequirements {
+    pub fn new() -> Self {
+        Self { 
+            size: 0, 
+            alignment: 0, 
+            memoryTypeBits: 0 
         }
     }
 }

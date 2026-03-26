@@ -37,6 +37,23 @@ pub type VkMemoryPropertyFlags = u32;
 pub type VkImageUsageFlags = u32;
 pub type VkImageAspectFlags = u32;
 
+// Image usage flags
+pub mod image_usage {
+    pub const TRANSFER_SRC: u32       = 0x00000001;
+    pub const TRANSFER_DST: u32       = 0x00000002;
+    pub const COLOR_ATTACHMENT: u32   = 0x00000010;
+    pub const DEPTH_STENCIL: u32      = 0x00000020;
+    pub const SAMPLED: u32            = 0x00000004;
+    pub const STORAGE: u32            = 0x00000008;
+}
+
+// Memory property flags
+pub mod memory_property {
+    pub const DEVICE_LOCAL: u32  = 0x00000001;
+    pub const HOST_VISIBLE: u32  = 0x00000002;
+    pub const HOST_COHERENT: u32 = 0x00000004;
+}
+
 // Debug flags
 pub mod severity {
     pub const VERBOSE: u32 = 0x00000001;
@@ -102,6 +119,7 @@ pub enum VkStructureType {
     PhysicalDeviceProperties2 = 1000059001,
     PhysicalDeviceDrmPropertiesEXT = 1000353000,
     DebugUtilsMessengerCreateInfoEXT = 1000128004,
+    ImageDrmFormatModifierExplicitCreateInfoEXT = 1000158004,
 }
 
 #[repr(i32)]
@@ -318,6 +336,24 @@ pub struct VkExternalMemoryImageCreateInfo {
     pub sType: VkStructureType,
     pub pNext: *const c_void,
     pub handleTypes: u32,
+}
+
+#[repr(C)]
+pub struct VkSubresourceLayout {
+    pub offset: u64,
+    pub size: u64,
+    pub rowPitch: u64,
+    pub arrayPitch: u64,
+    pub depthPitch: u64,
+}
+
+#[repr(C)]
+pub struct VkImageDrmFormatModifierExplicitCreateInfoEXT {
+    pub sType: VkStructureType,
+    pub pNext: *const c_void,
+    pub drmFormatModifier: u64,
+    pub drmFormatModifierPlaneCount: u32,
+    pub pPlaneLayouts: *const VkSubresourceLayout,
 }
 
 // Debug utils structs

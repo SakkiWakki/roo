@@ -1,6 +1,7 @@
 use std::os::unix::net::UnixStream;
 
 use super::super::encoding::read_event;
+use crate::pal::SupportedFormat;
 use super::super::objects::{ToplevelConfigure, WlBuffer, WlShm, WlSurface, XdgSurface, XdgWmBase};
 use super::super::types::Fd;
 
@@ -17,6 +18,7 @@ pub struct EventContext {
     pub wl_buffer: WlBuffer,
     pub id_counter: u32,
     pub top_config_tmp: Option<ToplevelConfigure>,
+    pub formats: Vec<SupportedFormat>,
 }
 
 pub fn event_loop<Ctx>(

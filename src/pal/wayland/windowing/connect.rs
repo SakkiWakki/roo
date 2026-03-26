@@ -3,10 +3,12 @@ use std::os::unix::net::UnixStream;
 
 use crate::pal::platform::objects::XdgSurface;
 use crate::pal::platform::windowing::feedback::open_drm_device;
-use std::fs::File;
+use crate::pal::platform::types::TRANCHE_FLAG_SCANOUT;
+use crate::pal::SupportedFormat;
 
 use super::buffer::setup_buffer;
 use super::event_loop::{event_loop, EventContext};
+use super::window::{DEFAULT_HEIGHT, DEFAULT_WIDTH};
 use super::feedback::dmabuf_feedback;
 use super::globals::setup_globals;
 use super::protocol::base_ids;
@@ -25,8 +27,13 @@ pub fn connect() -> Result<Window, std::io::Error> {
     let mut id_counter: u32 = base_ids::ZWP_LINUX_DMABUF + 1;
 
     let (compositor, wl_shm, xdg_wm_base, zxdg_deco_manager, dmabuf) = setup_globals(&mut stream)?;
-    let _feedback = dmabuf_feedback(&mut stream, &mut id_counter, &dmabuf)?;
-    let drm_device = open_drm_device(_feedback.main_device)?;
+    let feedback = dmabuf_feedback(&mut stream, &mut id_counter, &dmabuf)?;
+    let drm_device = open_drm_device(feedback.main_device)?;
+    let formats: Vec<SupportedFormat> = feedback.tranches.iter()
+        .filter(|t| t.flags & TRANCHE_FLAG_SCANOUT != 0)
+        .flat_map(|t| t.formats.iter())
+        .map(|&(drm_format, modifier)| SupportedFormat { drm_format, modifier })
+        .collect();
     let wl_surface = create_wl_surface(&mut stream, &mut id_counter, &compositor)?;
     let xdg_surface = create_xdg_surface(&mut stream, &mut id_counter, &xdg_wm_base, &wl_surface)?;
     let xdg_toplevel_id = create_xdg_toplevel(&mut stream, &mut id_counter, &xdg_surface)?;
@@ -40,7 +47,7 @@ pub fn connect() -> Result<Window, std::io::Error> {
     wl_surface.commit(&mut stream)?;
     let serial = wait_for_configure(&mut stream, xdg_surface.id)?;
 
-    let wl_buffer = setup_buffer(&mut stream, &mut id_counter, &wl_shm, 800, 600)?;
+    let wl_buffer = setup_buffer(&mut stream, &mut id_counter, &wl_shm, DEFAULT_WIDTH as i32, DEFAULT_HEIGHT as i32)?;
     wl_surface.attach(&mut stream, wl_buffer.id)?;
     xdg_surface.ack_configure(&mut stream, serial)?;
     wl_surface.commit(&mut stream)?;
@@ -57,6 +64,7 @@ pub fn connect() -> Result<Window, std::io::Error> {
             wl_buffer,
             id_counter,
             top_config_tmp: None,
+            formats,
         },
     })
 }

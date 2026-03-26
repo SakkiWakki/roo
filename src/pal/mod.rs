@@ -7,6 +7,18 @@ mod platform;
 pub use platform::windowing::connect;
 pub use platform::windowing::Window;
 
+pub struct SupportedFormat {
+    pub drm_format: u32,
+    pub modifier: u64,
+}
+
+pub trait PlatformWindow {
+    fn resolution(&self) -> (u32, u32);
+    fn gpu_info(&mut self) -> Option<GpuInfo>;
+    fn formats(&self) -> &[SupportedFormat];
+    fn run(&mut self) -> Result<(), std::io::Error>;
+}
+
 #[cfg(target_os = "linux")]
 pub mod linux;
 #[cfg(target_os = "linux")]

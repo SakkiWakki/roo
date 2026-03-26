@@ -1,9 +1,9 @@
-use std::os::unix::net::UnixStream;
-use crate::read_at;
 use super::super::super::super::types::Fd;
 use super::super::super::super::windowing::connect::setup_buffer;
 use super::super::super::super::windowing::event_loop::{EventContext, LoopAction};
 use super::client::XdgSurface;
+use crate::read_at;
+use std::os::unix::net::UnixStream;
 
 impl XdgSurface {
     pub fn handle_configure(

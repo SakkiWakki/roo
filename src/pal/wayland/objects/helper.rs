@@ -116,8 +116,10 @@ macro_rules! impl_read_ne_at {
     };
 }
 
+impl_read_ne_at!(u16);
 impl_read_ne_at!(u32);
 impl_read_ne_at!(u64);
+impl_read_ne_at!(i16);
 impl_read_ne_at!(i32);
 impl_read_ne_at!(i64);
 

@@ -14,7 +14,26 @@ pub struct WaylandEvent {
     pub fd: Option<Fd>,
 }
 
+pub const TRANCHE_FLAG_SCANOUT: u32 = 1;
+
+pub struct Tranche {
+    pub target_device: u64,
+    pub formats: Vec<(u32, u64)>,
+    pub flags: u32,
+}
+
+impl Default for Tranche {
+    fn default() -> Self {
+        Self {
+            target_device: 0,
+            formats: Vec::new(), 
+            flags: 0
+        }
+    }
+}
+
+
 pub struct DmabufFeedback {
     pub main_device: u64,
-    pub formats: Vec<(u32, u64)>,
+    pub tranches: Vec<Tranche>,
 }

@@ -2,14 +2,14 @@ use std::io::Cursor;
 use std::os::unix::net::UnixStream;
 
 use super::client::ZwpLinuxDmabufFeedbackV1;
-use crate::pal::platform::types::Fd;
+use crate::pal::platform::types::{Fd, Tranche};
 use crate::pal::platform::windowing::event_loop::LoopAction;
 use crate::{read_at, read_msg};
-
 pub struct FeedbackState {
     pub main_device: u64,
     pub format_table: Vec<(u32, u64)>,
-    pub formats: Vec<(u32, u64)>,
+    pub tranches: Vec<Tranche>,
+    pub current_tranche: Tranche,
 }
 
 impl Default for FeedbackState {
@@ -17,7 +17,8 @@ impl Default for FeedbackState {
         Self {
             main_device: 0,
             format_table: Vec::new(),
-            formats: Vec::new(),
+            tranches: Vec::new(),
+            current_tranche: Tranche::default()
         }
     }
 }
@@ -71,47 +72,63 @@ impl ZwpLinuxDmabufFeedbackV1 {
     }
 
     pub fn handle_main_device(
-        _data: &[u8],
+        data: &[u8],
         _fd: Option<Fd>,
-        _state: &mut FeedbackState,
+        state: &mut FeedbackState,
         _stream: &mut UnixStream,
     ) -> Result<LoopAction, std::io::Error> {
-        unimplemented!()
+        let main_device = read_at!(data, 4, u64);
+        state.main_device = main_device;
+        Ok(LoopAction::Continue)
     }
 
     pub fn handle_tranche_done(
         _data: &[u8],
         _fd: Option<Fd>,
-        _state: &mut FeedbackState,
+        state: &mut FeedbackState,
         _stream: &mut UnixStream,
     ) -> Result<LoopAction, std::io::Error> {
-        unimplemented!()
+        let tranche_new = std::mem::replace(
+            &mut state.current_tranche, Tranche::default()
+        );
+        state.tranches.push(tranche_new);
+        Ok(LoopAction::Continue)
     }
 
     pub fn handle_tranche_target_device(
-        _data: &[u8],
+        data: &[u8],
         _fd: Option<Fd>,
-        _state: &mut FeedbackState,
+        state: &mut FeedbackState,
         _stream: &mut UnixStream,
     ) -> Result<LoopAction, std::io::Error> {
-        unimplemented!()
+        let target_device = read_at!(data, 4, u64);
+        state.current_tranche.target_device = target_device;
+        Ok(LoopAction::Continue)
     }
 
     pub fn handle_tranche_formats(
-        _data: &[u8],
+        data: &[u8],
         _fd: Option<Fd>,
-        _state: &mut FeedbackState,
+        state: &mut FeedbackState,
         _stream: &mut UnixStream,
     ) -> Result<LoopAction, std::io::Error> {
-        unimplemented!()
+        let array_len = read_at!(data, 0, u32) as usize;
+        let index_count = array_len >> 1;
+        for i in 0..index_count {
+            let index = read_at!(data, 4 + (i << 1), u16) as usize;
+            let entry = state.format_table[index];
+            state.current_tranche.formats.push(entry);
+        }
+        Ok(LoopAction::Continue)
     }
 
     pub fn handle_tranche_flags(
-        _data: &[u8],
+        data: &[u8],
         _fd: Option<Fd>,
-        _state: &mut FeedbackState,
+        state: &mut FeedbackState,
         _stream: &mut UnixStream,
     ) -> Result<LoopAction, std::io::Error> {
-        unimplemented!()
+        state.current_tranche.flags = read_at!(data, 0, u32);
+        Ok(LoopAction::Continue)
     }
 }

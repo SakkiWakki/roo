@@ -8,7 +8,7 @@ use crate::pal::platform::objects::{
     ZxdgToplevelDecoration,
 };
 use crate::pal::platform::windowing::bind::Bind;
-use crate::pal::platform::DmabufFeedback;
+use crate::pal::platform::types::{DmabufFeedback, TRANCHE_FLAG_SCANOUT};
 
 use super::super::encoding::{encode_bind, encode_op};
 use super::super::types::WaylandGlobal;
@@ -168,6 +168,21 @@ fn loop_until_feedback(
         ),
         (
             feedback_id,
+            ZwpLinuxDmabufFeedbackV1::EVENT_TRANCHE_TARGET_DEVICE,
+            ZwpLinuxDmabufFeedbackV1::handle_tranche_target_device as _,
+        ),
+        (
+            feedback_id,
+            ZwpLinuxDmabufFeedbackV1::EVENT_TRANCHE_DONE,
+            ZwpLinuxDmabufFeedbackV1::handle_tranche_done as _,
+        ),
+        (
+            feedback_id,
+            ZwpLinuxDmabufFeedbackV1::EVENT_TRANCHE_FLAGS,
+            ZwpLinuxDmabufFeedbackV1::handle_tranche_flags as _,
+        ),
+        (
+            feedback_id,
             ZwpLinuxDmabufFeedbackV1::EVENT_DONE,
             ZwpLinuxDmabufFeedbackV1::handle_done as _,
         ),
@@ -175,7 +190,7 @@ fn loop_until_feedback(
     event_loop(stream, &mut state, &handlers)?;
     Ok(DmabufFeedback {
         main_device: state.main_device,
-        formats: state.formats,
+        tranches: state.tranches,
     })
 }
 

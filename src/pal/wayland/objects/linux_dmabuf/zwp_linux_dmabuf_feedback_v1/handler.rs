@@ -42,6 +42,7 @@ impl ZwpLinuxDmabufFeedbackV1 {
         state: &mut FeedbackState,
         _stream: &mut UnixStream,
     ) -> Result<LoopAction, std::io::Error> {
+
         let fd = fd.unwrap();
         let (size,) = read_msg!(Cursor::new(data), u32);
         let entry_count = size as usize >> 4;

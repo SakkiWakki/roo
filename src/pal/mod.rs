@@ -5,3 +5,11 @@
 mod platform;
 
 pub(crate) use platform::windowing::connect;
+pub use platform::windowing::Window;
+
+use std::ffi::c_void;
+
+// Rendering stuff
+pub struct GpuInfo {
+    pub device_node: std::fs::File,
+}

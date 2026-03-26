@@ -1,7 +1,8 @@
 mod pal;
-fn main() {
-    pal::connect()
-        .expect("We either had a memory error or failed to connect")
-        .run()
-        .expect("Event loop error");
+use roo::pal::{GpuInfo, Window};
+
+fn main() -> Result<(), std::io::Error> {
+    let mut window= pal::connect()?;
+    let gpu_info = window.gpu_info().expect("no gpu device");
+    window.run()
 }

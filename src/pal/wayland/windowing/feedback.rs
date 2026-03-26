@@ -1,3 +1,6 @@
+use std::fs::{self, File};
+use std::io::{Error, ErrorKind};
+use std::os::unix::fs::MetadataExt;
 use std::os::unix::net::UnixStream;
 
 use crate::pal::platform::objects::{FeedbackState, ZwpLinuxDmabufFeedbackV1, ZwpLinuxDmabufV1};
@@ -63,4 +66,15 @@ fn loop_until_feedback(
         main_device: state.main_device,
         tranches: state.tranches,
     })
+}
+
+pub fn open_drm_device(main_device: u64) -> Result<File, Error> {
+    for entry in fs::read_dir("/dev/dri/")? {
+        let entry = entry?;
+        let meta = entry.metadata()?;
+        if meta.rdev() == main_device {
+            return File::open(entry.path());
+        }
+    }
+    Err(Error::new(ErrorKind::NotFound, "no DRM device matches main_device"))
 }

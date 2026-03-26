@@ -1,6 +1,8 @@
 use std::os::unix::net::UnixStream;
+use std::fs::{File};
 
 use crate::pal::platform::objects::{WlDisplay, XdgSurface, XdgToplevel, XdgWmBase};
+use crate::pal::GpuInfo;
 
 use super::event_loop::{event_loop, EventContext};
 use super::protocol::base_ids;
@@ -8,6 +10,7 @@ use super::protocol::base_ids;
 pub struct Window {
     pub(super) stream: UnixStream,
     pub(super) ctx: EventContext,
+    pub(super) drm_device: Option<File>,
     pub(super) toplevel_id: u32,
 }
 
@@ -45,5 +48,9 @@ impl Window {
             ),
         ];
         event_loop(&mut self.stream, &mut self.ctx, &handlers)
+    }
+
+    pub fn gpu_info(&mut self) -> Option<GpuInfo> {
+        self.drm_device.take().map(|f| GpuInfo { device_node: f })
     }
 }

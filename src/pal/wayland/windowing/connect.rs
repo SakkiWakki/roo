@@ -1,7 +1,10 @@
 use std::env;
 use std::os::unix::net::UnixStream;
 
-use crate::pal::platform::objects::{XdgSurface, XdgWmBase};
+use crate::pal::platform::objects::{XdgSurface};
+use crate::pal::platform::windowing::feedback::open_drm_device;
+use std::fs::{File};
+
 
 use super::buffer::setup_buffer;
 use super::event_loop::{event_loop, EventContext};
@@ -9,7 +12,7 @@ use super::feedback::dmabuf_feedback;
 use super::globals::setup_globals;
 use super::protocol::base_ids;
 use super::surfaces::{
-    create_wl_surface, create_xdg_surface, create_xdg_toplevel, next_id, setup_decoration,
+    create_wl_surface, create_xdg_surface, create_xdg_toplevel, setup_decoration,
 };
 use super::window::Window;
 
@@ -25,6 +28,7 @@ pub fn connect() -> Result<Window, std::io::Error> {
     let (compositor, wl_shm, xdg_wm_base, zxdg_deco_manager, dmabuf) =
         setup_globals(&mut stream)?;
     let _feedback = dmabuf_feedback(&mut stream, &mut id_counter, &dmabuf)?;
+    let drm_device = open_drm_device(_feedback.main_device)?;
     let wl_surface = create_wl_surface(&mut stream, &mut id_counter, &compositor)?;
     let xdg_surface = create_xdg_surface(&mut stream, &mut id_counter, &xdg_wm_base, &wl_surface)?;
     let xdg_toplevel_id = create_xdg_toplevel(&mut stream, &mut id_counter, &xdg_surface)?;
@@ -41,6 +45,7 @@ pub fn connect() -> Result<Window, std::io::Error> {
     Ok(Window {
         stream,
         toplevel_id: xdg_toplevel_id,
+        drm_device: Some(drm_device),
         ctx: EventContext {
             xdg_wm_base,
             xdg_surface,

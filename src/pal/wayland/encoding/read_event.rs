@@ -20,6 +20,8 @@ pub fn read_event(stream: &mut UnixStream) -> Result<WaylandEvent, std::io::Erro
         recv_with_fd(stream, &mut data)?
     };
 
+    eprintln!("fd_from_header: {:?}", fd_from_header.map(|f| f.0));
+    eprintln!("fd_from_payload: {:?}", fd_from_payload.map(|f| f.0));
     let fd = fd_from_header.or(fd_from_payload);
     Ok(WaylandEvent {
         obj_id,
